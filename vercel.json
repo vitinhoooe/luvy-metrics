@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/coletar",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/whatsapp",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/whatsapp-domingo",
+      "schedule": "0 8 * * 0"
+    }
+  ]
+}
