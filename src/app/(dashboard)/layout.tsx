@@ -16,6 +16,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('user_id', user.id)
     .single()
 
+  // Redireciona novos usuários para o onboarding
+  if (perfil && perfil.onboarding_completo === false) {
+    redirect('/onboarding')
+  }
+
   const diasTrial = perfil?.trial_expira_em
     ? Math.max(0, Math.ceil((new Date(perfil.trial_expira_em).getTime() - Date.now()) / 86_400_000))
     : 7

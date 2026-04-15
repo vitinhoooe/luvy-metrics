@@ -1,5 +1,6 @@
 export type ProdutoTendencia = {
   id: string
+  nome?: string
   produto_nome: string
   fonte: string
   categoria: string
@@ -66,6 +67,7 @@ export type Perfil = {
   qtd_minima_padrao: number
   categoria_padrao: string
   alerta_ao_zerar: boolean
+  onboarding_completo: boolean
   created_at: string
   updated_at: string
 }

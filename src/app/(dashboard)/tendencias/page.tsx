@@ -1,80 +1,130 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { useState, useEffect, useCallback } from 'react'
+import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import type { ProdutoTendencia } from '@/types'
 
-const CATEGORIAS = ['Todas', 'Vibradores', 'Plugs Anais', 'Lubrificantes', 'Acessórios', 'Kits']
+// ─── Constantes ───────────────────────────────────────────────────
+const FONTES     = ['Todos', 'Mercado Livre', 'Shopee', 'Google Trends']
+const CATEGORIAS = ['Todos', 'Vibradores', 'Plugs Anais', 'Lubrificantes', 'Acessórios', 'Kits', 'Adultos']
 const PERIODOS   = ['Hoje', '7 dias', '30 dias']
 
 const SAZONALIDADE = [
-  {
-    evento: 'Carnaval',
-    data: '2026-02-14',
-    emoji: '🎭',
-    produtos: ['Fantasias sensuais', 'Acessórios de festa', 'Gel corporal'],
-    cor: 'from-orange-600/20 to-yellow-600/20',
-    borda: 'border-orange-500/20',
-  },
-  {
-    evento: 'Dia dos Namorados',
-    data: '2026-06-12',
-    emoji: '💑',
-    produtos: ['Vibradores premium', 'Kits para casais', 'Lubrificantes especiais'],
-    cor: 'from-pink-600/20 to-red-600/20',
-    borda: 'border-pink-500/20',
-  },
-  {
-    evento: 'Halloween',
-    data: '2026-10-31',
-    emoji: '🎃',
-    produtos: ['Fantasias adultas', 'Acessórios temáticos', 'Kits surpresa'],
-    cor: 'from-orange-700/20 to-purple-700/20',
-    borda: 'border-orange-600/20',
-  },
-  {
-    evento: 'Natal / Réveillon',
-    data: '2026-12-25',
-    emoji: '🎁',
-    produtos: ['Kits presentes íntimos', 'Embalagens especiais', 'Combos casal'],
-    cor: 'from-red-600/20 to-green-700/20',
-    borda: 'border-red-500/20',
-  },
+  { evento: 'Carnaval',          data: '2026-02-14', emoji: '🎭', produtos: ['Fantasias sensuais', 'Acessórios de festa', 'Gel corporal'], cor: 'from-orange-600/20 to-yellow-600/20', borda: 'border-orange-500/20' },
+  { evento: 'Dia dos Namorados', data: '2026-06-12', emoji: '💑', produtos: ['Vibradores premium', 'Kits para casais', 'Lubrificantes especiais'], cor: 'from-pink-600/20 to-red-600/20', borda: 'border-pink-500/20' },
+  { evento: 'Halloween',         data: '2026-10-31', emoji: '🎃', produtos: ['Fantasias adultas', 'Acessórios temáticos', 'Kits surpresa'], cor: 'from-orange-700/20 to-purple-700/20', borda: 'border-orange-600/20' },
+  { evento: 'Natal / Réveillon', data: '2026-12-25', emoji: '🎁', produtos: ['Kits presentes íntimos', 'Embalagens especiais', 'Combos casal'], cor: 'from-red-600/20 to-green-700/20', borda: 'border-red-500/20' },
 ]
 
+// ─── Utilitários ──────────────────────────────────────────────────
 function diasFaltam(dataStr: string) {
-  const diff = new Date(dataStr).getTime() - Date.now()
-  return Math.max(0, Math.ceil(diff / 86_400_000))
+  return Math.max(0, Math.ceil((new Date(dataStr).getTime() - Date.now()) / 86_400_000))
 }
 
-function badgeCrescimento(pct: number) {
-  if (pct > 50) return { label: `🔥 +${pct.toFixed(0)}%`, cor: 'bg-red-500/15 text-red-400 border-red-500/25' }
-  if (pct >= 25) return { label: `↑ +${pct.toFixed(0)}%`, cor: 'bg-green-500/15 text-green-400 border-green-500/25' }
-  return { label: `→ +${pct.toFixed(0)}%`, cor: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25' }
-}
-
-// Gera dados mockados de sparkline (7 dias) com base no crescimento
 function gerarSparkline(produto: ProdutoTendencia) {
   const base = produto.vendas_ontem || 10
   return Array.from({ length: 7 }, (_, i) => ({
-    dia: `D-${6 - i}`,
-    vendas: Math.max(0, Math.round(base + (Math.random() - 0.3) * base * 0.4 + (i / 6) * (produto.vendas_hoje - base))),
+    d: `D${i + 1}`,
+    v: Math.max(0, Math.round(base + (Math.random() - 0.3) * base * 0.4 + (i / 6) * (produto.vendas_hoje - base))),
   }))
 }
 
+function badgeFonte(fonte: string) {
+  if (fonte === 'Mercado Livre') return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+  if (fonte === 'Shopee')        return 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+  return 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+}
+
+function emojiFonte(fonte: string) {
+  if (fonte === 'Mercado Livre') return '🟡'
+  if (fonte === 'Shopee')        return '🟠'
+  return '🔵'
+}
+
+// ─── Card de produto ──────────────────────────────────────────────
+function CardProduto({ produto, onAdicionarEstoque }: { produto: ProdutoTendencia; onAdicionarEstoque: (p: ProdutoTendencia) => void }) {
+  const sparkline = gerarSparkline(produto)
+  const pct = produto.crescimento_pct
+
+  return (
+    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:border-[#c840e0]/30 transition-all group flex flex-col">
+      {/* Topo */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 flex-1">{produto.produto_nome}</h3>
+        <span className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full border ${
+          pct > 50 ? 'bg-red-500/15 text-red-400 border-red-500/25 animate-pulse' :
+          pct >= 25 ? 'bg-green-500/15 text-green-400 border-green-500/25' :
+                      'bg-yellow-500/15 text-yellow-400 border-yellow-500/25'
+        }`}>
+          {pct > 50 ? '🔥' : pct >= 25 ? '↑' : '→'} +{pct.toFixed(0)}%
+        </span>
+      </div>
+
+      {/* Badge fonte */}
+      <span className={`text-xs font-medium px-2 py-0.5 rounded-full border w-fit mb-3 ${badgeFonte(produto.fonte)}`}>
+        {emojiFonte(produto.fonte)} {produto.fonte}
+      </span>
+
+      {/* Sparkline */}
+      <div className="flex-1 mb-3">
+        <ResponsiveContainer width="100%" height={55}>
+          <LineChart data={sparkline}>
+            <Line type="monotone" dataKey="v" stroke="#c840e0" strokeWidth={1.5} dot={false} />
+            <Tooltip
+              contentStyle={{ background: '#0d0a13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 10 }}
+              formatter={(v: number) => [v, 'Vendas']}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Métricas */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div>
+          <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Preço médio</p>
+          <p className="text-sm font-bold text-white">
+            {produto.preco_medio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Vendas/dia</p>
+          <p className="text-sm font-bold text-white">{produto.vendas_hoje.toLocaleString('pt-BR')}</p>
+        </div>
+      </div>
+
+      {/* Botões */}
+      <div className="flex gap-2 mt-auto">
+        {produto.url_produto ? (
+          <a href={produto.url_produto} target="_blank" rel="noopener noreferrer"
+            className="flex-1 py-2 rounded-xl border border-white/10 text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white transition-all text-center">
+            Ver produto ↗
+          </a>
+        ) : (
+          <div className="flex-1" />
+        )}
+        <button onClick={() => onAdicionarEstoque(produto)}
+          className="flex-1 py-2 rounded-xl bg-[#c840e0]/10 border border-[#c840e0]/20 text-[#c840e0] text-xs font-medium hover:bg-[#c840e0]/20 transition-all">
+          + Estoque
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Página principal ─────────────────────────────────────────────
 export default function TendenciasPage() {
   const [produtos, setProdutos] = useState<ProdutoTendencia[]>([])
   const [carregando, setCarregando] = useState(true)
-  const [categoria, setCategoria] = useState('Todas')
+  const [atualizando, setAtualizando] = useState(false)
   const [busca, setBusca] = useState('')
+  const [fonte, setFonte] = useState('Todos')
+  const [categoria, setCategoria] = useState('Todos')
   const [periodo, setPeriodo] = useState('Hoje')
   const [aba, setAba] = useState<'tendencias' | 'sazonalidade'>('tendencias')
 
-  useEffect(() => { buscarProdutos() }, [])
-
-  async function buscarProdutos() {
+  const buscarProdutos = useCallback(async () => {
     setCarregando(true)
     const supabase = createClient()
     const { data } = await supabase
@@ -83,6 +133,20 @@ export default function TendenciasPage() {
       .order('crescimento_pct', { ascending: false })
     setProdutos(data ?? [])
     setCarregando(false)
+  }, [])
+
+  useEffect(() => { buscarProdutos() }, [buscarProdutos])
+
+  async function atualizarDados() {
+    setAtualizando(true)
+    try {
+      const res = await fetch('/api/cron/coletar', {
+        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET ?? ''}` },
+      })
+      if (res.ok) { toast.success('Dados atualizados!'); buscarProdutos() }
+      else toast.error('Erro ao atualizar dados')
+    } catch { toast.error('Erro ao atualizar dados') }
+    setAtualizando(false)
   }
 
   async function adicionarAoEstoque(produto: ProdutoTendencia) {
@@ -102,38 +166,29 @@ export default function TendenciasPage() {
     else toast.error('Erro ao adicionar ao estoque')
   }
 
+  // Filtros
   const filtrados = produtos.filter((p) => {
-    const matchCat = categoria === 'Todas' || p.categoria === categoria
     const matchBusca = p.produto_nome.toLowerCase().includes(busca.toLowerCase())
-    return matchCat && matchBusca
+    const matchFonte = fonte === 'Todos' || p.fonte === fonte
+    const matchCat   = categoria === 'Todos' || p.categoria === categoria
+    return matchBusca && matchFonte && matchCat
   })
 
-  // Dados para gráfico geral
-  const dadosGrafico = CATEGORIAS.slice(1).map((cat) => {
-    const prods = produtos.filter((p) => p.categoria === cat)
-    return {
-      categoria: cat,
-      crescimento: prods.length ? prods.reduce((a, p) => a + p.crescimento_pct, 0) / prods.length : 0,
-    }
-  })
+  // Produto explosão do dia
+  const explosao = filtrados[0]
 
   return (
     <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Radar de Tendências</h1>
-        <p className="text-zinc-400 text-sm mt-0.5">Produtos em alta no mercado adulto hoje</p>
+        <p className="text-zinc-400 text-sm mt-0.5">Produtos em alta no mercado adulto em tempo real</p>
       </div>
 
       {/* Abas */}
       <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit mb-6 border border-white/10">
         {(['tendencias', 'sazonalidade'] as const).map((a) => (
-          <button
-            key={a}
-            onClick={() => setAba(a)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
-              aba === a ? 'bg-[#c840e0] text-white shadow-sm' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
+          <button key={a} onClick={() => setAba(a)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === a ? 'bg-[#c840e0] text-white shadow-sm' : 'text-zinc-400 hover:text-white'}`}>
             {a === 'tendencias' ? '🔥 Tendências' : '📅 Sazonalidade'}
           </button>
         ))}
@@ -141,38 +196,19 @@ export default function TendenciasPage() {
 
       {aba === 'tendencias' ? (
         <>
-          {/* Gráfico geral */}
-          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 mb-6">
-            <h2 className="text-base font-semibold text-white mb-4">Crescimento médio por categoria</h2>
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={dadosGrafico}>
-                <XAxis dataKey="categoria" tick={{ fill: '#71717a', fontSize: 11 }} />
-                <YAxis tick={{ fill: '#71717a', fontSize: 11 }} unit="%" />
-                <Tooltip
-                  contentStyle={{ background: '#0d0a13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
-                  labelStyle={{ color: '#fff' }}
-                  formatter={(v: number) => [`${v.toFixed(1)}%`, 'Crescimento']}
-                />
-                <Line type="monotone" dataKey="crescimento" stroke="#c840e0" strokeWidth={2} dot={{ fill: '#c840e0', r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
           {/* Filtros */}
-          <div className="flex flex-wrap gap-3 mb-5">
-            <input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar produto..."
-              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40 min-w-[200px]"
-            />
-            <select
-              value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
-              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40"
-            >
-              {CATEGORIAS.map((c) => <option key={c} value={c} className="bg-[#0d0a13]">{c}</option>)}
-            </select>
+          <div className="flex flex-wrap gap-3 mb-6">
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar produto..."
+              className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40 min-w-[200px]" />
+            {[
+              { label: 'Fonte', val: fonte, set: setFonte, opts: FONTES },
+              { label: 'Categoria', val: categoria, set: setCategoria, opts: CATEGORIAS },
+            ].map(({ val, set, opts }) => (
+              <select key={val} value={val} onChange={(e) => set(e.target.value)}
+                className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40">
+                {opts.map((o) => <option key={o} value={o} className="bg-[#0d0a13]">{o}</option>)}
+              </select>
+            ))}
             <div className="flex gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
               {PERIODOS.map((p) => (
                 <button key={p} onClick={() => setPeriodo(p)}
@@ -181,78 +217,80 @@ export default function TendenciasPage() {
                 </button>
               ))}
             </div>
+            <button onClick={atualizarDados} disabled={atualizando}
+              className="px-4 py-2.5 rounded-xl bg-[#c840e0]/15 border border-[#c840e0]/25 text-[#c840e0] text-sm font-medium hover:bg-[#c840e0]/25 disabled:opacity-50 transition-all ml-auto">
+              {atualizando ? 'Atualizando...' : '↻ Atualizar dados'}
+            </button>
           </div>
 
-          {/* Grid de cards */}
           {carregando ? (
-            <div className="py-16 text-center text-zinc-500 text-sm">Carregando tendências...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-3 animate-pulse">
+                  <div className="h-4 bg-white/5 rounded w-3/4" />
+                  <div className="h-3 bg-white/5 rounded w-1/4" />
+                  <div className="h-14 bg-white/5 rounded" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="h-8 bg-white/5 rounded" />
+                    <div className="h-8 bg-white/5 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : filtrados.length === 0 ? (
-            <div className="py-16 text-center">
+            <div className="py-20 text-center">
               <p className="text-3xl mb-3">🔍</p>
-              <p className="text-zinc-400 text-sm">Nenhum produto encontrado com esses filtros.</p>
+              <p className="text-zinc-400 text-sm">Nenhum produto com esses filtros.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtrados.map((produto) => {
-                const badge = badgeCrescimento(produto.crescimento_pct)
-                const sparkline = gerarSparkline(produto)
-                return (
-                  <div key={produto.id} className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:border-[#c840e0]/30 transition-all group">
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2">{produto.produto_nome}</h3>
-                      <span className={`flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-full border ${badge.cor}`}>
-                        {badge.label}
-                      </span>
-                    </div>
-
-                    {/* Sparkline */}
-                    <ResponsiveContainer width="100%" height={60}>
-                      <LineChart data={sparkline}>
-                        <Line type="monotone" dataKey="vendas" stroke="#c840e0" strokeWidth={1.5} dot={false} />
-                        <Tooltip
-                          contentStyle={{ background: '#0d0a13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11 }}
-                          formatter={(v: number) => [v, 'Vendas']}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-
-                    <div className="grid grid-cols-2 gap-2 mt-3 mb-4">
-                      <div>
-                        <p className="text-xs text-zinc-500">Preço médio</p>
-                        <p className="text-sm font-semibold text-white">
-                          {produto.preco_medio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-zinc-500">Vendas/dia</p>
-                        <p className="text-sm font-semibold text-white">{produto.vendas_hoje}</p>
+            <>
+              {/* Explosão do dia */}
+              {explosao && (
+                <div className="bg-gradient-to-br from-[#c840e0]/20 to-purple-900/20 border border-[#c840e0]/30 rounded-2xl p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg font-bold text-[#c840e0] animate-pulse">🔥</span>
+                    <span className="text-sm font-bold text-[#c840e0] uppercase tracking-widest">Explosão do dia</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-white mb-1">{explosao.produto_nome}</h2>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-3xl font-black text-[#c840e0]">+{explosao.crescimento_pct.toFixed(0)}%</span>
+                        <span className="text-sm text-zinc-400">{explosao.vendas_hoje} vendas hoje</span>
+                        <span className="text-sm text-zinc-400">
+                          {explosao.preco_medio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} médio
+                        </span>
                       </div>
                     </div>
-
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => adicionarAoEstoque(produto)}
-                        className="flex-1 py-2 rounded-xl bg-[#c840e0]/10 border border-[#c840e0]/20 text-[#c840e0] text-xs font-medium hover:bg-[#c840e0]/20 transition-all"
-                      >
-                        + Estoque
+                      {explosao.url_produto && (
+                        <a href={explosao.url_produto} target="_blank" rel="noopener noreferrer"
+                          className="px-4 py-2 rounded-xl border border-white/20 text-white text-sm hover:bg-white/10 transition-all">
+                          Ver produto ↗
+                        </a>
+                      )}
+                      <button onClick={() => adicionarAoEstoque(explosao)}
+                        className="px-4 py-2 rounded-xl bg-[#c840e0] text-white text-sm font-semibold hover:opacity-90 transition-all">
+                        + Adicionar ao estoque
                       </button>
-                      <a
-                        href="/calculadora"
-                        className="flex-1 py-2 rounded-xl border border-white/10 text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white transition-all text-center"
-                      >
-                        Calcular lucro
-                      </a>
                     </div>
                   </div>
-                )
-              })}
-            </div>
+                </div>
+              )}
+
+              {/* Grid de cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtrados.map((p) => (
+                  <CardProduto key={p.id} produto={p} onAdicionarEstoque={adicionarAoEstoque} />
+                ))}
+              </div>
+            </>
           )}
         </>
       ) : (
-        /* Sazonalidade */
+        // Sazonalidade
         <div className="space-y-4">
-          <p className="text-sm text-zinc-400 mb-2">Planeje seu estoque com antecedência para os grandes eventos do ano.</p>
+          <p className="text-sm text-zinc-400 mb-4">Planeje seu estoque com antecedência para os grandes eventos.</p>
           {SAZONALIDADE.map((s) => {
             const dias = diasFaltam(s.data)
             return (
@@ -267,22 +305,20 @@ export default function TendenciasPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     <p className="text-3xl font-bold text-white">{dias}</p>
                     <p className="text-xs text-zinc-400">{dias === 1 ? 'dia restante' : 'dias restantes'}</p>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-xs text-zinc-400 mb-2 uppercase tracking-wider">Produtos mais vendidos no período</p>
+                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider">Produtos mais vendidos no período</p>
                   <div className="flex flex-wrap gap-2">
                     {s.produtos.map((p) => (
-                      <span key={p} className="px-3 py-1 rounded-full bg-white/10 text-white text-xs border border-white/10">
-                        {p}
-                      </span>
+                      <span key={p} className="px-3 py-1 rounded-full bg-white/10 text-white text-xs border border-white/10">{p}</span>
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500 mt-3">
+                <p className="text-xs text-zinc-600 mt-3">
                   💡 Recomendação: abasteça o estoque com pelo menos {Math.min(60, dias)} dias de antecedência.
                 </p>
               </div>
