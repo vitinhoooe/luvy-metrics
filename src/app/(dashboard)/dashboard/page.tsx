@@ -13,14 +13,25 @@ export default async function DashboardPage() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
 
-  const [resTendencias, resPerfil, resCalculos, resAlertas] = await Promise.all([
-    supabase
+  // Busca produtos em alta. Tenta primeiro os de hoje; se vazio usa os mais recentes
+  let resTendencias = await supabase
+    .from('produtos_tendencia')
+    .select('*')
+    .gt('crescimento_pct', 20)
+    .gte('updated_at', hoje)
+    .order('crescimento_pct', { ascending: false })
+    .limit(50)
+
+  if (!resTendencias.data?.length) {
+    resTendencias = await supabase
       .from('produtos_tendencia')
       .select('*')
-      .gt('crescimento_pct', 20)
-      .gte('updated_at', hoje)
+      .gt('crescimento_pct', 0)
       .order('crescimento_pct', { ascending: false })
-      .limit(20),
+      .limit(50)
+  }
+
+  const [resPerfil, resCalculos, resAlertas] = await Promise.all([
     supabase.from('perfis').select('*').eq('user_id', user.id).single(),
     supabase.from('calculos').select('lucro_unidade').eq('user_id', user.id),
     supabase

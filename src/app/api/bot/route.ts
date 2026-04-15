@@ -83,7 +83,7 @@ ${resCalculos.data?.map((c) =>
 
     // Streaming
     const stream = await anthropic.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: mensagens,
