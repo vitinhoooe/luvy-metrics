@@ -74,7 +74,7 @@ function CardProduto({ produto, onAdicionarEstoque }: { produto: ProdutoTendenci
             <Line type="monotone" dataKey="v" stroke="#c840e0" strokeWidth={1.5} dot={false} />
             <Tooltip
               contentStyle={{ background: '#0d0a13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 10 }}
-              formatter={(v: number) => [v, 'Vendas']}
+              formatter={(v) => [v, 'Vendas']}
             />
           </LineChart>
         </ResponsiveContainer>

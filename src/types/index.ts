@@ -9,6 +9,9 @@ export type ProdutoTendencia = {
   vendas_ontem: number
   preco_medio: number
   alerta: boolean
+  url_produto?: string | null
+  imagem_url?: string | null
+  marketplace?: string | null
   updated_at: string
   created_at: string
 }
