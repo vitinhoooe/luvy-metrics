@@ -37,10 +37,14 @@ export default function Sidebar({ user, perfil }: any) {
       <div style={{ padding: '24px 20px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
-            width: 32, height: 32, background: '#7c3aed',
-            borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 900, color: '#fff', fontSize: 16,
-          }}>L</div>
+            width: 36, height: 36, background: 'linear-gradient(135deg,#7c3aed,#9333ea)',
+            borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22,7 13.5,15.5 8.5,10.5 2,17"/>
+              <polyline points="16,7 22,7 22,13"/>
+            </svg>
+          </div>
           <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px' }}>
             <span style={{ color: '#111827' }}>Luvy</span>
             <span style={{ color: '#7c3aed' }}>Metrics</span>
