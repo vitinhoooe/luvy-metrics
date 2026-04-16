@@ -40,8 +40,8 @@ export default function Sidebar({ user, perfil }: any) {
             fontWeight: 900, color: '#fff', fontSize: 16,
           }}>L</div>
           <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px' }}>
-            <span style={{ color: '#ffffff' }}>Luvy</span>
-            <span style={{ color: '#a78bfa' }}>Metrics</span>
+            <span style={{ color: '#111827' }}>Luvy</span>
+            <span style={{ color: '#7c3aed' }}>Metrics</span>
           </span>
         </div>
       </div>

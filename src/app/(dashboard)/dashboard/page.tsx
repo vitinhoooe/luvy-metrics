@@ -89,10 +89,13 @@ export default async function DashboardPage() {
                 <tr key={i} style={{ borderBottom: `1px solid ${BD}` }}>
                   <td style={{ padding: '14px 16px' }}>
                     {p.url_produto ? (
-                      <a href={p.url_produto} target="_blank" rel="noopener noreferrer" style={{ color: AC, textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
-                        {p.produto_nome} <span style={{ fontSize: 11, opacity: 0.5 }}>↗</span>
+                      <a href={p.url_produto} target="_blank" rel="noopener noreferrer"
+                        style={{ color: '#7c3aed', textDecoration: 'none', fontWeight: 600, fontSize: 14 }}
+                        onMouseEnter={e => (e.target as HTMLElement).style.textDecoration = 'underline'}
+                        onMouseLeave={e => (e.target as HTMLElement).style.textDecoration = 'none'}>
+                        {p.produto_nome} ↗
                       </a>
-                    ) : <span style={{ fontSize: 14, fontWeight: 500, color: TX }}>{p.produto_nome}</span>}
+                    ) : <span style={{ fontWeight: 600, fontSize: 14, color: '#111827' }}>{p.produto_nome}</span>}
                     {p.categoria && <div style={{ fontSize: 11, color: MT, marginTop: 2 }}>{p.categoria}</div>}
                   </td>
                   <td style={{ padding: '14px 16px' }}><span style={{ background: fonte.bg, color: fonte.color, padding: '3px 8px', borderRadius: 100, fontSize: 11, fontWeight: 600 }}>{p.fonte || 'ML'}</span></td>

@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { XMLParser } from 'fast-xml-parser'
 
 const TERMOS = [
-  'vibrador', 'gel intimo', 'sex shop', 'plug anal',
-  'calcinha sensual', 'pompoarismo', 'preservativo',
-  'algemas', 'fantasia erotica', 'lingerie',
+  'vibrador', 'gel intimo', 'plug anal',
+  'calcinha sensual', 'pompoarismo',
+  'preservativo', 'algemas', 'fantasia erotica',
+  'anel peniano', 'bala vibradora',
+  'camisinha', 'lubrificante', 'sex shop',
 ]
 
 const TERMOS_TRENDS = [
@@ -13,16 +15,7 @@ const TERMOS_TRENDS = [
   'sex shop', 'brinquedo erotico', 'algema', 'camisinha', 'gel',
 ]
 
-export async function GET(req: NextRequest) {
-  const auth = req.headers.get('authorization')
-  const cronSecret = process.env.CRON_SECRET
-
-  // Aceita sem auth (chamada do frontend)
-  // ou com auth correta (cron job)
-  if (auth && auth !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ erro: 'Não autorizado' }, { status: 401 })
-  }
-
+export async function GET() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -82,7 +75,7 @@ export async function GET(req: NextRequest) {
     // Categoria adultos
     const urls = [
       'https://api.mercadolibre.com/sites/MLB/search?category=MLB1648&sort=sold_quantity_desc&limit=30',
-      ...TERMOS.map(t => `https://api.mercadolibre.com/sites/MLB/search?q=${encodeURIComponent(t)}&sort=sold_quantity_desc&limit=20`)
+      ...TERMOS.map(t => `https://api.mercadolibre.com/sites/MLB/search?q=${encodeURIComponent(t + ' sex shop')}&sort=sold_quantity_desc&limit=10`)
     ]
 
     for (const url of urls) {
