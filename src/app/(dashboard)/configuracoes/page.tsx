@@ -173,6 +173,25 @@ export default function ConfiguracoesPage() {
         }}>
           {salvando ? 'Salvando...' : 'Salvar todas as configurações'}
         </button>
+
+        {/* Em breve */}
+        <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginTop: 0 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>🚀 Em breve</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              'Alertas automáticos no WhatsApp às 7h',
+              'Bot IA especialista em sex shop',
+              'Comparador de preços ML vs Shopee',
+              'Dados de tendência em tempo real',
+              'Relatório semanal automático',
+            ].map(item => (
+              <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#6b7280' }}>
+                <span style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed', padding: '2px 8px', borderRadius: 100, fontSize: 11, fontWeight: 600 }}>Em breve</span>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </>
   )

@@ -16,18 +16,20 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: produtos } = await supabase
-    .from('produtos_tendencia').select('*')
-    .order('crescimento_pct', { ascending: false }).limit(10)
+  const [produtosRes, perfilRes, estoqueRes] = await Promise.all([
+    supabase.from('produtos_tendencia').select('*').order('crescimento_pct', { ascending: false }).limit(10),
+    supabase.from('perfis').select('nome, nome_loja, trial_expira_em, plano').eq('id', user?.id).single(),
+    supabase.from('estoque_usuario').select('id', { count: 'exact', head: true }).eq('user_id', user?.id ?? '').eq('ativo', true),
+  ])
 
-  const { data: perfil } = await supabase
-    .from('perfis').select('nome, nome_loja, trial_expira_em, plano').eq('id', user?.id).single()
-
+  const produtos = produtosRes.data
+  const perfil = perfilRes.data
+  const totalEstoque = estoqueRes.count ?? 0
   const agora = new Date()
   const hora = agora.getHours()
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
   const nomeUsuario = perfil?.nome || user?.email?.split('@')[0] || 'lojista'
-  const dataFormatada = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const dataFormatada = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
   const diasRestantes = perfil?.trial_expira_em ? Math.max(0, Math.ceil((new Date(perfil.trial_expira_em).getTime() - agora.getTime()) / 86400000)) : 7
   const produtosEmAlta = produtos?.filter(p => p.crescimento_pct > 20) || []
 
@@ -50,30 +52,30 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 32 }}>
-        {[
-          { titulo: 'Produtos em alta', valor: String(produtosEmAlta.length), sub: 'crescimento acima de 20%', cor: AC },
-          { titulo: 'Estoque evitado', valor: 'R$ 0', sub: 'economia no mês', cor: GR },
-          { titulo: 'Lucro médio', valor: 'R$ 0', sub: 'nos cálculos salvos', cor: '#d97706' },
-          { titulo: 'Alertas hoje', valor: '0', sub: 'oportunidades', cor: '#2563eb' },
-        ].map((c, i) => (
-          <div key={i} style={{ ...CARD, padding: 28 }}>
-            <div style={{ fontSize: 12, color: MT, fontWeight: 500, marginBottom: 12 }}>{c.titulo}</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: c.cor, marginBottom: 4, letterSpacing: '-1px' }}>{c.valor}</div>
-            <div style={{ fontSize: 12, color: MT }}>{c.sub}</div>
-          </div>
-        ))}
+      {/* 2 cards úteis */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 }}>
+        <div style={{ ...CARD, padding: 28 }}>
+          <div style={{ fontSize: 12, color: MT, fontWeight: 500, marginBottom: 12 }}>Produtos em alta hoje</div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: AC, marginBottom: 4 }}>{produtosEmAlta.length}</div>
+          <div style={{ fontSize: 12, color: MT }}>crescimento acima de 20%</div>
+        </div>
+        <div style={{ ...CARD, padding: 28 }}>
+          <div style={{ fontSize: 12, color: MT, fontWeight: 500, marginBottom: 12 }}>Produtos no seu estoque</div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: GR, marginBottom: 4 }}>{totalEstoque}</div>
+          <div style={{ fontSize: 12, color: MT }}>cadastrados e ativos</div>
+        </div>
       </div>
 
+      {/* Tabela */}
       <div style={{ ...CARD, overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BD}` }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: TX, margin: '0 0 4px' }}>Produtos em Tendência</h2>
-          <p style={{ fontSize: 13, color: MT, margin: 0 }}>{produtos?.length || 0} produtos coletados</p>
+          <p style={{ fontSize: 13, color: MT, margin: 0 }}>{produtos?.length || 0} produtos mais recentes</p>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f9fafb' }}>
-              {['Produto', 'Fonte', 'Crescimento', 'Vendas/dia', 'Preço médio', 'Lucro est.', 'Ação'].map(col => (
+              {['Produto', 'Fonte', 'Crescimento', 'Vendas/dia', 'Preço médio'].map(col => (
                 <th key={col} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: MT, borderBottom: `1px solid ${BD}` }}>{col}</th>
               ))}
             </tr>
@@ -83,34 +85,29 @@ export default async function DashboardPage() {
               const pct = p.crescimento_pct || 0
               const badgeBg = pct > 50 ? '#fef2f2' : pct > 25 ? '#fffbeb' : '#ecfdf5'
               const badgeColor = pct > 50 ? '#dc2626' : pct > 25 ? '#d97706' : GR
-              const lucro = p.preco_medio ? (p.preco_medio * 0.35).toFixed(2) : '0.00'
-              const fonte = badgeFonte(p.fonte || p.marketplace || 'Google Trends')
+              const fonte = badgeFonte(p.fonte || 'ML')
               return (
                 <tr key={i} style={{ borderBottom: `1px solid ${BD}` }}>
                   <td style={{ padding: '14px 16px' }}>
                     {p.url_produto ? (
                       <a href={p.url_produto} target="_blank" rel="noopener noreferrer"
-                        style={{ color: '#7c3aed', textDecoration: 'none', fontWeight: 600, fontSize: 14 }}
+                        style={{ color: AC, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}
                         onMouseEnter={e => (e.target as HTMLElement).style.textDecoration = 'underline'}
                         onMouseLeave={e => (e.target as HTMLElement).style.textDecoration = 'none'}>
                         {p.produto_nome} ↗
                       </a>
-                    ) : <span style={{ fontWeight: 600, fontSize: 14, color: '#111827' }}>{p.produto_nome}</span>}
+                    ) : <span style={{ fontWeight: 600, fontSize: 14, color: TX }}>{p.produto_nome}</span>}
                     {p.categoria && <div style={{ fontSize: 11, color: MT, marginTop: 2 }}>{p.categoria}</div>}
                   </td>
                   <td style={{ padding: '14px 16px' }}><span style={{ background: fonte.bg, color: fonte.color, padding: '3px 8px', borderRadius: 100, fontSize: 11, fontWeight: 600 }}>{p.fonte || 'ML'}</span></td>
                   <td style={{ padding: '14px 16px' }}><span style={{ background: badgeBg, color: badgeColor, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 700 }}>+{pct}%</span></td>
                   <td style={{ padding: '14px 16px', fontSize: 14, color: TX }}>{p.vendas_hoje || 0}</td>
                   <td style={{ padding: '14px 16px', fontSize: 14, color: TX }}>R$ {p.preco_medio?.toFixed(2) || '0,00'}</td>
-                  <td style={{ padding: '14px 16px', fontSize: 14, color: GR, fontWeight: 600 }}>R$ {lucro}</td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <a href="/estoque" style={{ background: '#f5f3ff', color: AC, border: '1px solid #ddd6fe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>+ Estoque</a>
-                  </td>
                 </tr>
               )
             })}
             {(!produtos || !produtos.length) && (
-              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: MT }}>Nenhum produto. Vá em Tendências e clique em &quot;Atualizar dados&quot;.</td></tr>
+              <tr><td colSpan={5} style={{ padding: 40, textAlign: 'center', color: MT }}>Nenhum produto. Vá em Tendências e clique em &quot;Atualizar dados&quot;.</td></tr>
             )}
           </tbody>
         </table>

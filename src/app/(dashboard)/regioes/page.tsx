@@ -31,6 +31,15 @@ export default function RegioesPage() {
         <p style={{ fontSize: 14, color: MT }}>Veja onde cada produto vende mais no Brasil</p>
       </div>
 
+      {/* Beta banner */}
+      <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 10, padding: '12px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 16 }}>🔬</span>
+        <div>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#d97706' }}>Funcionalidade em Beta</span>
+          <span style={{ fontSize: 13, color: '#6b7280', marginLeft: 8 }}>Os dados de demanda regional são estimativas baseadas em pesquisas de mercado. Em breve com dados em tempo real.</span>
+        </div>
+      </div>
+
       <div style={{ ...CARD, background: '#f5f3ff', borderColor: '#ddd6fe', marginBottom: 32 }}>
         <p style={{ fontSize: 11, color: AC, fontWeight: 600, letterSpacing: '0.5px', marginBottom: 8, textTransform: 'uppercase' }}>Maior demanda esta semana</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
