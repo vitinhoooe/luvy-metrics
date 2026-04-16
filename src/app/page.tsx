@@ -6,8 +6,8 @@ export default async function Home() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) redirect('/dashboard')
-  } catch {
-    // Se der erro de contexto, vai para a landing
-  }
-  redirect('/landing')
+  } catch {}
+
+  // Serve o HTML estático da landing page
+  redirect('/landing-page')
 }
