@@ -3,11 +3,6 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const TX = '#faf9ff'
-const MT = '#9ca3af'
-const AC = '#a78bfa'
-const BD = 'rgba(139,92,246,0.12)'
-
 const navItems = [
   { href: '/dashboard', icon: '📊', label: 'Dashboard' },
   { href: '/tendencias', icon: '🔥', label: 'Tendências' },
@@ -28,66 +23,58 @@ export default function Sidebar({ user, perfil }: any) {
   }
 
   const diasRestantes = perfil?.trial_expira_em
-    ? Math.max(0, Math.ceil(
-        (new Date(perfil.trial_expira_em).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-      ))
+    ? Math.max(0, Math.ceil((new Date(perfil.trial_expira_em).getTime() - Date.now()) / 86400000))
     : 7
 
   return (
     <div style={{
-      position: 'fixed', left: 0, top: 0, bottom: 0, width: '240px',
-      background: '#13111e', borderRight: `1px solid ${BD}`,
-      display: 'flex', flexDirection: 'column', zIndex: 100,
-      fontFamily: "'Plus Jakarta Sans', sans-serif"
+      position: 'fixed', left: 0, top: 0, bottom: 0, width: 240,
+      background: '#1a1333', display: 'flex', flexDirection: 'column', zIndex: 100,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
     }}>
       <div style={{ padding: '24px 20px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: '34px', height: '34px',
-            background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-            borderRadius: '10px', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            fontSize: '16px', fontWeight: '900',
-            color: '#fff', letterSpacing: '-1px'
+            width: 34, height: 34, background: 'linear-gradient(135deg,#7c3aed,#6d28d9)',
+            borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 16, fontWeight: 900, color: '#fff',
           }}>L</div>
-          <span style={{ fontSize: '18px', fontWeight: '800', color: TX, letterSpacing: '-0.5px' }}>
-            Luvy<span style={{ color: AC }}>Metrics</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
+            Luvy<span style={{ color: '#a78bfa' }}>Metrics</span>
           </span>
         </div>
       </div>
 
-      <div style={{ padding: '12px 20px 16px', borderBottom: `1px solid ${BD}` }}>
+      <div style={{ padding: '12px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{
-          width: '36px', height: '36px', background: 'rgba(139,92,246,0.2)',
-          borderRadius: '50%', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: '15px', fontWeight: '700',
-          color: AC, marginBottom: '8px'
+          width: 36, height: 36, background: 'rgba(124,58,237,0.3)', borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 15, fontWeight: 700, color: '#a78bfa', marginBottom: 8,
         }}>
           {(perfil?.nome || user?.email || 'U')[0].toUpperCase()}
         </div>
-        <div style={{ fontSize: '13px', fontWeight: '600', color: TX, marginBottom: '2px' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 2 }}>
           {perfil?.nome_loja || 'Minha Loja'}
         </div>
-        <div style={{ fontSize: '11px', color: MT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {user?.email}
         </div>
       </div>
 
-      <nav style={{ flex: 1, padding: '12px', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: 12, overflowY: 'auto' }}>
         {navItems.map(item => {
-          const isActive = pathname === item.href ||
-            (item.href !== '/dashboard' && pathname.startsWith(item.href))
+          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
           return (
             <Link key={item.href} href={item.href} style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '10px 12px', borderRadius: '10px', marginBottom: '2px',
-              textDecoration: 'none', fontSize: '14px',
-              fontWeight: isActive ? '600' : '400',
-              color: isActive ? AC : MT,
-              background: isActive ? 'rgba(139,92,246,0.15)' : 'transparent',
-              borderLeft: isActive ? '2px solid #8b5cf6' : '2px solid transparent',
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+              textDecoration: 'none', fontSize: 14,
+              fontWeight: isActive ? 600 : 400,
+              color: isActive ? '#fff' : 'rgba(255,255,255,0.55)',
+              background: isActive ? 'rgba(124,58,237,0.25)' : 'transparent',
+              borderLeft: isActive ? '2px solid #a78bfa' : '2px solid transparent',
             }}>
-              <span style={{ fontSize: '16px' }}>{item.icon}</span>
+              <span style={{ fontSize: 16 }}>{item.icon}</span>
               {item.label}
             </Link>
           )
@@ -97,26 +84,19 @@ export default function Sidebar({ user, perfil }: any) {
       <div style={{ padding: '12px 16px 20px' }}>
         {perfil?.plano !== 'ativo' && (
           <div style={{
-            background: 'rgba(139,92,246,0.1)',
-            border: '1px solid rgba(139,92,246,0.2)',
-            borderRadius: '12px', padding: '12px',
-            marginBottom: '12px', textAlign: 'center'
+            background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.25)',
+            borderRadius: 12, padding: 12, marginBottom: 12, textAlign: 'center',
           }}>
-            <div style={{ fontSize: '11px', color: MT, marginBottom: '4px' }}>Período de teste</div>
-            <div style={{ fontSize: '14px', fontWeight: '700', color: AC }}>
-              {diasRestantes} dias restantes
-            </div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Período de teste</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#a78bfa' }}>{diasRestantes} dias restantes</div>
           </div>
         )}
         <button onClick={handleSair} style={{
-          width: '100%', padding: '10px', background: 'transparent',
-          border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px',
-          color: MT, fontSize: '13px', cursor: 'pointer',
-          fontFamily: 'inherit', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', gap: '8px'
-        }}>
-          Sair
-        </button>
+          width: '100%', padding: 10, background: 'transparent',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+          color: 'rgba(255,255,255,0.5)', fontSize: 13, cursor: 'pointer',
+          fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>Sair</button>
       </div>
     </div>
   )

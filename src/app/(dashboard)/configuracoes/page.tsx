@@ -5,27 +5,27 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import type { Perfil } from '@/types'
 
-const TX = '#faf9ff'
-const MT = '#9ca3af'
-const AC = '#a78bfa'
-const GR = '#10b981'
-const BD = 'rgba(139,92,246,0.2)'
-const CARD_BG = '#1e1c2e'
+const TX = '#111827'
+const MT = '#6b7280'
+const AC = '#7c3aed'
+const GR = '#059669'
+const BD = '#e5e7eb'
+const CARD_BG = '#fff'
 const BTN = '#7c3aed'
 
 const WPP_NUMBER = process.env.NEXT_PUBLIC_WPP_SUPORTE ?? '5521999999999'
 
 const INP: React.CSSProperties = {
   width: '100%', padding: '12px 14px',
-  background: 'rgba(255,255,255,0.05)',
-  border: `1px solid ${BD}`, borderRadius: 10,
+  background: '#fff',
+  border: '1.5px solid #d1d5db', borderRadius: 10,
   color: TX, fontSize: 14, outline: 'none',
   fontFamily: 'inherit', boxSizing: 'border-box',
 }
 
 const CARD: React.CSSProperties = {
   background: CARD_BG, border: `1px solid ${BD}`,
-  borderRadius: 16, padding: 28,
+  borderRadius: 16, padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
 }
 
 function Toggle({ ativo, onChange }: { ativo: boolean; onChange: (v: boolean) => void }) {
@@ -33,7 +33,7 @@ function Toggle({ ativo, onChange }: { ativo: boolean; onChange: (v: boolean) =>
     <button onClick={() => onChange(!ativo)} style={{
       width: 44, height: 24, borderRadius: 12, display: 'flex', alignItems: 'center',
       padding: '0 2px', border: 'none', cursor: 'pointer', flexShrink: 0,
-      background: ativo ? '#8b5cf6' : 'rgba(255,255,255,0.1)',
+      background: ativo ? AC : '#d1d5db',
     }}>
       <div style={{
         width: 18, height: 18, borderRadius: '50%', background: '#fff',

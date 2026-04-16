@@ -4,19 +4,19 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import type { EstoqueItem } from '@/types'
 
-const TX  = '#faf9ff'
-const MT  = '#9ca3af'
-const AC  = '#a78bfa'
-const GR  = '#10b981'
-const RD  = '#ef4444'
-const GL  = '#f59e0b'
-const BD  = 'rgba(139,92,246,0.2)'
-const CARD_BG = '#1e1c2e'
+const TX  = '#111827'
+const MT  = '#6b7280'
+const AC  = '#7c3aed'
+const GR  = '#059669'
+const RD  = '#dc2626'
+const GL  = '#d97706'
+const BD  = '#e5e7eb'
+const CARD_BG = '#fff'
 const BTN_PRI = '#7c3aed'
 
-const CARD: React.CSSProperties = { background: CARD_BG, border: `1px solid ${BD}`, borderRadius: 16 }
+const CARD: React.CSSProperties = { background: CARD_BG, border: `1px solid ${BD}`, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
 const INP: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.06)', border: `1px solid ${BD}`,
+  background: '#fff', border: `1.5px solid #d1d5db`,
   borderRadius: 8, padding: '9px 12px', color: TX,
   fontSize: 14, width: '100%', outline: 'none',
 }
@@ -31,9 +31,9 @@ function statusItem(i: EstoqueItem): 'ok' | 'baixo' | 'zerado' {
 }
 
 const STATUS_STYLE: Record<string, React.CSSProperties> = {
-  ok:     { background: 'rgba(52,211,153,0.12)',  color: GR, border: '1px solid rgba(52,211,153,0.25)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
-  baixo:  { background: 'rgba(251,191,36,0.12)',  color: GL, border: '1px solid rgba(251,191,36,0.25)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
-  zerado: { background: 'rgba(239,68,68,0.12)',   color: RD, border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
+  ok:     { background: '#ecfdf5', color: GR, border: '1px solid #a7f3d0', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
+  baixo:  { background: '#fffbeb', color: GL, border: '1px solid #fde68a', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
+  zerado: { background: '#fef2f2', color: RD, border: '1px solid #fecaca', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
 }
 const STATUS_LABEL = { ok: '● OK', baixo: '● Baixo', zerado: '● Zerado' }
 
