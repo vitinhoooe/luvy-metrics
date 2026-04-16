@@ -21,12 +21,18 @@ type Prospecto = {
   rating: number
   total_avaliacoes: number
   aberto?: boolean | null
+  email?: string | null
+  cidade?: string
 }
 
 const CIDADES = [
-  'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba',
-  'Porto Alegre', 'Salvador', 'Brasília', 'Recife', 'Fortaleza',
-  'Goiânia', 'Manaus', 'Campinas', 'Florianópolis', 'Vitória',
+  'São Paulo SP', 'Rio de Janeiro RJ', 'Belo Horizonte MG', 'Salvador BA',
+  'Fortaleza CE', 'Curitiba PR', 'Manaus AM', 'Recife PE',
+  'Porto Alegre RS', 'Goiânia GO', 'Belém PA', 'Florianópolis SC',
+  'Maceió AL', 'Natal RN', 'Campo Grande MS', 'Vitória ES',
+  'Campinas SP', 'Santos SP', 'Ribeirão Preto SP', 'Guarulhos SP',
+  'Niterói RJ', 'Uberlândia MG', 'Joinville SC', 'Londrina PR',
+  'Maringá PR', 'São Luís MA', 'Cuiabá MT', 'Brasília DF',
 ]
 
 export default function ProspectosPage() {
@@ -53,7 +59,7 @@ export default function ProspectosPage() {
   }
 
   async function enviarEmail(p: Prospecto) {
-    const email = emailInputs[p.place_id]
+    const email = emailInputs[p.place_id] || p.email
     if (!email || !email.includes('@')) { toast.error('Informe um email válido'); return }
     setEnviando(prev => ({ ...prev, [p.place_id]: true }))
     try {
@@ -110,9 +116,9 @@ export default function ProspectosPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
           {[
             { label: 'Encontrados', valor: prospectos.length, cor: AC },
+            { label: 'Com email', valor: prospectos.filter(p => p.email).length, cor: GR },
             { label: 'Com telefone', valor: prospectos.filter(p => p.telefone).length, cor: '#2563eb' },
-            { label: 'Com site', valor: prospectos.filter(p => p.website).length, cor: '#d97706' },
-            { label: 'Emails enviados', valor: enviados.size, cor: GR },
+            { label: 'Emails enviados', valor: enviados.size, cor: '#d97706' },
           ].map((s, i) => (
             <div key={i} style={{ ...CARD, padding: 20 }}>
               <div style={{ fontSize: 11, color: MT, fontWeight: 500, marginBottom: 6 }}>{s.label}</div>
@@ -173,7 +179,7 @@ export default function ProspectosPage() {
                       ) : (
                         <div style={{ display: 'flex', gap: 6 }}>
                           <input
-                            value={emailInputs[p.place_id] || ''}
+                            value={emailInputs[p.place_id] ?? p.email ?? ''}
                             onChange={e => setEmailInputs(prev => ({ ...prev, [p.place_id]: e.target.value }))}
                             placeholder="email@loja.com"
                             style={{ ...INP, width: 160, padding: '6px 10px', fontSize: 12 }}

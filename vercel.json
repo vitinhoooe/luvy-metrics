@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/emails",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/prospectar",
+      "schedule": "0 8 * * *"
     }
   ]
 }
