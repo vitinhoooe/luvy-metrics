@@ -1,14 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 
-const TX = '#f0ebff'
-const MT = '#8b7fa0'
-const AC = '#c840e0'
-const GR = '#34d399'
-const BD = 'rgba(200,64,224,0.18)'
-const CARD_BG = 'rgba(255,255,255,0.04)'
+const TX = '#faf9ff'
+const MT = '#9ca3af'
+const AC = '#a78bfa'
+const GR = '#10b981'
+const BD = 'rgba(139,92,246,0.2)'
+const CARD_BG = '#1e1c2e'
 
 function badgeFonte(fonte: string) {
-  if (fonte === 'Mercado Livre') return { bg: 'rgba(251,191,36,0.15)', color: '#fbbf24' }
+  if (fonte === 'Mercado Livre') return { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' }
   if (fonte === 'Shopee') return { bg: 'rgba(249,115,22,0.15)', color: '#fb923c' }
   return { bg: 'rgba(96,165,250,0.15)', color: '#60a5fa' }
 }
@@ -39,9 +39,7 @@ export default async function DashboardPage() {
   })
 
   const diasRestantes = perfil?.trial_expira_em
-    ? Math.max(0, Math.ceil(
-        (new Date(perfil.trial_expira_em).getTime() - agora.getTime()) / (1000 * 60 * 60 * 24)
-      ))
+    ? Math.max(0, Math.ceil((new Date(perfil.trial_expira_em).getTime() - agora.getTime()) / (1000 * 60 * 60 * 24)))
     : 7
 
   const produtosEmAlta = produtos?.filter(p => p.crescimento_pct > 20) || []
@@ -56,11 +54,11 @@ export default async function DashboardPage() {
           <p style={{ fontSize: '14px', color: MT, textTransform: 'capitalize' }}>{dataFormatada}</p>
         </div>
         <div style={{
-          background: perfil?.plano === 'ativo' ? 'rgba(34,197,94,0.1)' : 'rgba(147,51,234,0.1)',
-          border: `1px solid ${perfil?.plano === 'ativo' ? 'rgba(34,197,94,0.3)' : 'rgba(147,51,234,0.3)'}`,
+          background: perfil?.plano === 'ativo' ? 'rgba(16,185,129,0.1)' : 'rgba(139,92,246,0.1)',
+          border: `1px solid ${perfil?.plano === 'ativo' ? 'rgba(16,185,129,0.3)' : 'rgba(139,92,246,0.3)'}`,
           borderRadius: '100px', padding: '6px 16px',
           fontSize: '13px', fontWeight: '600',
-          color: perfil?.plano === 'ativo' ? GR : '#9333ea'
+          color: perfil?.plano === 'ativo' ? GR : AC
         }}>
           {perfil?.plano === 'ativo' ? '✓ Plano ativo' : `Trial — ${diasRestantes} dias restantes`}
         </div>
@@ -68,68 +66,45 @@ export default async function DashboardPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '32px' }}>
         {[
-          { titulo: 'Produtos em alta hoje', valor: String(produtosEmAlta.length), sub: 'crescimento acima de 20%', cor: AC },
+          { titulo: 'Produtos em alta hoje', valor: String(produtosEmAlta.length), sub: 'crescimento acima de 20%', cor: '#8b5cf6' },
           { titulo: 'Estoque parado evitado', valor: 'R$ 0,00', sub: 'economia acumulada no mês', cor: GR },
-          { titulo: 'Lucro médio estimado', valor: 'R$ 0,00', sub: 'nos seus cálculos salvos', cor: '#fbbf24' },
+          { titulo: 'Lucro médio estimado', valor: 'R$ 0,00', sub: 'nos seus cálculos salvos', cor: '#f59e0b' },
           { titulo: 'Alertas hoje', valor: '0', sub: 'oportunidades identificadas', cor: '#60a5fa' },
         ].map((card, i) => (
-          <div key={i} style={{
-            background: CARD_BG,
-            border: `1px solid ${BD}`,
-            borderRadius: '12px', padding: '24px'
-          }}>
-            <div style={{ fontSize: '12px', color: MT, fontWeight: '500', marginBottom: '12px' }}>
-              {card.titulo}
-            </div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: card.cor, marginBottom: '6px', letterSpacing: '-1px' }}>
-              {card.valor}
-            </div>
+          <div key={i} style={{ background: CARD_BG, border: `1px solid ${BD}`, borderRadius: '16px', padding: '28px' }}>
+            <div style={{ fontSize: '12px', color: MT, fontWeight: '500', marginBottom: '12px' }}>{card.titulo}</div>
+            <div style={{ fontSize: '28px', fontWeight: '800', color: card.cor, marginBottom: '6px', letterSpacing: '-1px' }}>{card.valor}</div>
             <div style={{ fontSize: '12px', color: MT }}>{card.sub}</div>
           </div>
         ))}
       </div>
 
-      <div style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: `1px solid ${BD}`,
-        borderRadius: '12px', overflow: 'hidden'
-      }}>
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: `1px solid ${BD}`,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-        }}>
+      <div style={{ background: CARD_BG, border: `1px solid ${BD}`, borderRadius: '16px', overflow: 'hidden' }}>
+        <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BD}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: '700', color: TX, margin: '0 0 4px' }}>
-              Produtos em Tendência
-            </h2>
-            <p style={{ fontSize: '13px', color: MT, margin: 0 }}>
-              {produtos?.length || 0} produtos coletados
-            </p>
+            <h2 style={{ fontSize: '16px', fontWeight: '700', color: TX, margin: '0 0 4px' }}>Produtos em Tendência</h2>
+            <p style={{ fontSize: '13px', color: MT, margin: 0 }}>{produtos?.length || 0} produtos coletados</p>
           </div>
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: 'rgba(147,51,234,0.06)' }}>
+            <tr style={{ background: 'rgba(139,92,246,0.06)' }}>
               {['Produto', 'Fonte', 'Crescimento', 'Vendas/dia', 'Preço médio', 'Lucro est.', 'Ação'].map(col => (
-                <th key={col} style={{
-                  padding: '12px 16px', textAlign: 'left',
-                  fontSize: '11px', fontWeight: '600', color: MT
-                }}>{col}</th>
+                <th key={col} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: MT }}>{col}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {produtos?.map((p: any, i: number) => {
               const pct = p.crescimento_pct || 0
-              const badgeBg = pct > 50 ? 'rgba(239,68,68,0.15)' : pct > 25 ? 'rgba(245,158,11,0.15)' : 'rgba(52,211,153,0.15)'
-              const badgeColor = pct > 50 ? '#f87171' : pct > 25 ? '#fbbf24' : GR
+              const badgeBg = pct > 50 ? 'rgba(239,68,68,0.15)' : pct > 25 ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)'
+              const badgeColor = pct > 50 ? '#f87171' : pct > 25 ? '#f59e0b' : GR
               const badgeIcon = pct > 50 ? '🔥' : pct > 25 ? '↑' : '→'
               const lucro = p.preco_medio ? (p.preco_medio * 0.35).toFixed(2) : '0.00'
               const fonte = badgeFonte(p.fonte || p.marketplace || 'Google Trends')
               return (
-                <tr key={i} style={{ borderBottom: `1px solid rgba(200,64,224,0.06)` }}>
+                <tr key={i} style={{ borderBottom: `1px solid rgba(139,92,246,0.08)` }}>
                   <td style={{ padding: '14px 16px' }}>
                     {p.url_produto ? (
                       <a href={p.url_produto} target="_blank" rel="noopener noreferrer"
@@ -142,26 +117,16 @@ export default async function DashboardPage() {
                     <div style={{ fontSize: '11px', color: MT, marginTop: '2px' }}>{p.categoria}</div>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      background: fonte.bg, color: fonte.color,
-                      padding: '3px 8px', borderRadius: '100px', fontSize: '11px', fontWeight: '600'
-                    }}>{p.fonte || p.marketplace || 'ML'}</span>
+                    <span style={{ background: fonte.bg, color: fonte.color, padding: '3px 8px', borderRadius: '100px', fontSize: '11px', fontWeight: '600' }}>{p.fonte || 'ML'}</span>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      background: badgeBg, color: badgeColor,
-                      padding: '4px 10px', borderRadius: '100px', fontSize: '12px', fontWeight: '700'
-                    }}>{badgeIcon} +{pct}%</span>
+                    <span style={{ background: badgeBg, color: badgeColor, padding: '4px 10px', borderRadius: '100px', fontSize: '12px', fontWeight: '700' }}>{badgeIcon} +{pct}%</span>
                   </td>
                   <td style={{ padding: '14px 16px', fontSize: '14px', color: TX }}>{p.vendas_hoje || 0}</td>
                   <td style={{ padding: '14px 16px', fontSize: '14px', color: TX }}>R$ {p.preco_medio?.toFixed(2) || '0,00'}</td>
                   <td style={{ padding: '14px 16px', fontSize: '14px', color: GR, fontWeight: '600' }}>R$ {lucro}</td>
                   <td style={{ padding: '14px 16px' }}>
-                    <a href="/estoque" style={{
-                      background: 'rgba(147,51,234,0.15)', color: '#9333ea',
-                      border: '1px solid rgba(147,51,234,0.3)', borderRadius: '6px',
-                      padding: '6px 12px', fontSize: '12px', fontWeight: '600', textDecoration: 'none'
-                    }}>+ Estoque</a>
+                    <a href="/estoque" style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '600', textDecoration: 'none' }}>+ Estoque</a>
                   </td>
                 </tr>
               )

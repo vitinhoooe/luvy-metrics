@@ -3,15 +3,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 
-const TX = '#f0ebff'
-const MT = '#8b7fa0'
-const AC = '#c840e0'
-const GR = '#34d399'
-const BD = 'rgba(200,64,224,0.18)'
-const CARD_BG = 'rgba(255,255,255,0.04)'
-const BTN = '#9333ea'
+const TX = '#faf9ff'
+const MT = '#9ca3af'
+const AC = '#a78bfa'
+const GR = '#10b981'
+const BD = 'rgba(139,92,246,0.2)'
+const CARD_BG = '#1e1c2e'
+const BTN = '#7c3aed'
 
-const CARD: React.CSSProperties = { background: CARD_BG, border: `1px solid ${BD}`, borderRadius: 12 }
+const CARD: React.CSSProperties = { background: CARD_BG, border: `1px solid ${BD}`, borderRadius: 16 }
 const INP: React.CSSProperties = {
   background: 'rgba(255,255,255,0.06)', border: `1px solid ${BD}`,
   borderRadius: 8, padding: '10px 12px', color: TX,

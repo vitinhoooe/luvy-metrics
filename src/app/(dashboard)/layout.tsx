@@ -22,9 +22,9 @@ export default async function DashboardLayout({
     <div style={{
       display: 'flex',
       minHeight: '100vh',
-      background: '#08060d',
+      background: '#0f0e17',
       fontFamily: "'Plus Jakarta Sans', sans-serif",
-      color: '#f0ebff'
+      color: '#faf9ff'
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <Sidebar user={user} perfil={perfil} />
@@ -33,14 +33,14 @@ export default async function DashboardLayout({
         flex: 1,
         padding: '32px',
         minHeight: '100vh',
-        background: '#08060d'
+        background: '#0f0e17'
       }}>
         {children}
       </main>
       <Toaster
         position="top-right"
         toastOptions={{
-          style: { background: '#0a0812', border: '1px solid rgba(200,64,224,0.18)', color: '#f0ebff' },
+          style: { background: '#1e1c2e', border: '1px solid rgba(139,92,246,0.2)', color: '#faf9ff' },
         }}
       />
     </div>

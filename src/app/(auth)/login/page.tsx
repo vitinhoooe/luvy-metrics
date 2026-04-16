@@ -2,10 +2,10 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-const TX = '#f0ebff'
-const MT = '#8b7fa0'
-const AC = '#c840e0'
-const BD = 'rgba(200,64,224,0.18)'
+const TX = '#faf9ff'
+const MT = '#9ca3af'
+const AC = '#a78bfa'
+const BD = 'rgba(139,92,246,0.2)'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -26,7 +26,7 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#08060d',
+      minHeight: '100vh', background: '#0f0e17',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Plus Jakarta Sans', sans-serif", padding: '24px'
     }}>
@@ -35,7 +35,7 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{
             width: '56px', height: '56px',
-            background: 'linear-gradient(135deg, #c840e0, #9333ea)',
+            background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
             borderRadius: '16px', display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 16px', fontSize: '24px',
@@ -50,7 +50,7 @@ export default function LoginPage() {
         </div>
 
         <div style={{
-          background: 'rgba(255,255,255,0.04)',
+          background: '#1e1c2e',
           border: `1px solid ${BD}`,
           borderRadius: '20px', padding: '36px'
         }}>
@@ -67,11 +67,8 @@ export default function LoginPage() {
                   Seu email
                 </label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                  required
+                  type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="seu@email.com" required
                   style={{
                     width: '100%', padding: '14px 16px',
                     background: 'rgba(255,255,255,0.05)',
@@ -81,12 +78,12 @@ export default function LoginPage() {
                     marginBottom: '20px', fontFamily: 'inherit',
                     boxSizing: 'border-box'
                   }}
-                  onFocus={e => (e.target.style.borderColor = AC)}
+                  onFocus={e => (e.target.style.borderColor = '#8b5cf6')}
                   onBlur={e => (e.target.style.borderColor = BD)}
                 />
                 <button type="submit" disabled={loading} style={{
                   width: '100%', padding: '14px',
-                  background: loading ? 'rgba(147,51,234,0.5)' : 'linear-gradient(135deg, #c840e0, #9333ea)',
+                  background: loading ? 'rgba(139,92,246,0.5)' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
                   border: 'none', borderRadius: '10px',
                   color: '#fff', fontSize: '15px', fontWeight: '600',
                   cursor: loading ? 'not-allowed' : 'pointer',
@@ -95,39 +92,27 @@ export default function LoginPage() {
                   {loading ? 'Enviando...' : 'Entrar com link mágico →'}
                 </button>
               </form>
-              <p style={{ textAlign: 'center', color: MT, fontSize: '13px', margin: '20px 0 0' }}>
-                Sem senha. Sem complicação.
-              </p>
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📧</div>
-              <h2 style={{ fontSize: '20px', fontWeight: '700', color: TX, margin: '0 0 12px' }}>
-                Link enviado!
-              </h2>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: TX, margin: '0 0 12px' }}>Link enviado!</h2>
               <p style={{ color: MT, fontSize: '14px', lineHeight: '1.7', margin: '0 0 24px' }}>
                 Verifique sua caixa de entrada em{' '}
                 <strong style={{ color: AC }}>{email}</strong>{' '}
                 e clique no link para acessar.
               </p>
               <button onClick={() => setEnviado(false)} style={{
-                background: 'transparent', border: 'none',
-                color: MT, fontSize: '14px',
-                cursor: 'pointer', fontFamily: 'inherit'
-              }}>
-                Usar outro email
-              </button>
+                background: 'transparent', border: 'none', color: MT, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit'
+              }}>Usar outro email</button>
             </div>
           )}
         </div>
 
         <p style={{ textAlign: 'center', color: MT, fontSize: '13px', marginTop: '24px' }}>
           Ainda não tem conta?{' '}
-          <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: AC, textDecoration: 'none' }}>
-            Assinar agora →
-          </a>
+          <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank" rel="noopener noreferrer"
+            style={{ color: AC, textDecoration: 'none' }}>Assinar agora →</a>
         </p>
       </div>
     </div>
