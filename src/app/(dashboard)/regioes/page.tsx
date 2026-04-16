@@ -1,15 +1,15 @@
 'use client'
 
 // ─── Cores ────────────────────────────────────────────────────────
-const TX  = '#f5f0ff'
-const MT  = '#9d8faa'
+const TX  = '#f0ebff'
+const MT  = '#8b7fa0'
 const MT2 = '#6d6079'
 const AC  = '#c840e0'
 const GR  = '#34d399'
 const RD  = '#ef4444'
 const GL  = '#fbbf24'
-const BD  = 'rgba(200,64,224,0.15)'
-const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: `1px solid ${BD}`, borderRadius: 12 }
+const BD  = 'rgba(200,64,224,0.18)'
+const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', border: `1px solid ${BD}`, borderRadius: 12 }
 
 const REGIOES = [
   {

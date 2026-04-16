@@ -3,25 +3,26 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 
-// ─── Cores ────────────────────────────────────────────────────────
-const TX  = '#f5f0ff'
-const MT  = '#9d8faa'
-const MT2 = '#6d6079'
-const AC  = '#c840e0'
-const GR  = '#34d399'
-const BD  = 'rgba(200,64,224,0.15)'
-const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: `1px solid ${BD}`, borderRadius: 12 }
+const TX = '#f0ebff'
+const MT = '#8b7fa0'
+const AC = '#c840e0'
+const GR = '#34d399'
+const BD = 'rgba(200,64,224,0.18)'
+const CARD_BG = 'rgba(255,255,255,0.04)'
+const BTN = '#9333ea'
+
+const CARD: React.CSSProperties = { background: CARD_BG, border: `1px solid ${BD}`, borderRadius: 12 }
 const INP: React.CSSProperties = {
   background: 'rgba(255,255,255,0.06)', border: `1px solid ${BD}`,
   borderRadius: 8, padding: '10px 12px', color: TX,
   fontSize: 14, width: '100%', outline: 'none',
 }
 
-const MPS = [
-  { label: 'Shopee',             valor: 'shopee',    taxa: 0.14 },
-  { label: 'Mercado Livre',      valor: 'ml',        taxa: 0.12 },
-  { label: 'Instagram/WhatsApp', valor: 'instagram', taxa: 0    },
-  { label: 'Loja física',        valor: 'fisico',    taxa: 0    },
+const PRESETS = [
+  { label: 'Shopee', valor: 'shopee', taxa: 14 },
+  { label: 'Mercado Livre', valor: 'ml', taxa: 12 },
+  { label: 'Instagram/WhatsApp', valor: 'instagram', taxa: 0 },
+  { label: 'Loja física', valor: 'fisico', taxa: 0 },
 ]
 
 type Calculo = {
@@ -32,40 +33,32 @@ type Produto = { id: string; produto_nome: string; preco_medio: number }
 
 function fmt(v: number) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }
 
-function calcular(custo: number, taxa: number, margem: number, simples: boolean) {
-  const imp = simples ? 0.06 : 0
-  const tot = taxa + imp + margem / 100
-  if (tot >= 1 || custo <= 0) return { preco: 0, lucro: 0 }
-  const preco = custo / (1 - tot)
-  return { preco, lucro: preco * (margem / 100) }
-}
-
 function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="block mb-1.5" style={{ fontSize: 11, color: MT, fontWeight: 500, letterSpacing: '0.4px' }}>
-      {children}
-    </label>
-  )
+  return <label style={{ display: 'block', fontSize: 11, color: MT, fontWeight: 500, letterSpacing: '0.4px', marginBottom: 6 }}>{children}</label>
 }
 
 export default function CalculadoraPage() {
-  const [nome,      setNome]      = useState('')
-  const [custo,     setCusto]     = useState(0)
-  const [margem,    setMargem]    = useState(40)
-  const [mp,        setMp]        = useState('shopee')
-  const [simples,   setSimples]   = useState(false)
+  const [nome, setNome] = useState('')
+  const [custo, setCusto] = useState(0)
+  const [margem, setMargem] = useState(40)
+  const [taxa, setTaxa] = useState(14)
+  const [imposto, setImposto] = useState(0)
+  const [outrasTaxas, setOutrasTaxas] = useState(0)
+  const [mpLabel, setMpLabel] = useState('shopee')
   const [historico, setHistorico] = useState<Calculo[]>([])
-  const [salvando,  setSalvando]  = useState(false)
-  const [busca,     setBusca]     = useState('')
+  const [salvando, setSalvando] = useState(false)
+  const [busca, setBusca] = useState('')
   const [sugestoes, setSugestoes] = useState<Produto[]>([])
   const buscaRef = useRef<HTMLDivElement>(null)
 
-  const taxa  = MPS.find((m) => m.valor === mp)?.taxa ?? 0
-  const mpLabel = MPS.find((m) => m.valor === mp)?.label ?? ''
-  const { preco, lucro } = calcular(custo, taxa, margem, simples)
-  const taxaVal = preco * taxa
-  const impVal  = preco * (simples ? 0.06 : 0)
-  const margemVal = preco * (margem / 100)
+  const totalTaxas = (taxa + imposto + outrasTaxas + margem) / 100
+  const precoIdeal = totalTaxas < 1 && custo > 0 ? custo / (1 - totalTaxas) : 0
+  const taxaVal = precoIdeal * (taxa / 100)
+  const impostoVal = precoIdeal * (imposto / 100)
+  const outrasTaxasVal = precoIdeal * (outrasTaxas / 100)
+  const margemVal = precoIdeal * (margem / 100)
+  const lucro = margemVal
+  const margemReal = precoIdeal > 0 ? ((precoIdeal - custo) / precoIdeal * 100) : 0
 
   useEffect(() => { buscarHistorico() }, [])
 
@@ -89,10 +82,7 @@ export default function CalculadoraPage() {
   }, [busca])
 
   async function buscarHistorico() {
-    try {
-      const res = await fetch('/api/calculadora')
-      if (res.ok) setHistorico((await res.json()).slice(0, 5))
-    } catch {}
+    try { const res = await fetch('/api/calculadora'); if (res.ok) setHistorico((await res.json()).slice(0, 5)) } catch {}
   }
 
   function selecionarProduto(p: Produto) {
@@ -102,25 +92,32 @@ export default function CalculadoraPage() {
     toast.success(`Custo estimado em 40% do preço médio (${fmt(p.preco_medio)})`)
   }
 
+  function selecionarPreset(preset: typeof PRESETS[0]) {
+    setTaxa(preset.taxa)
+    setMpLabel(preset.valor)
+  }
+
   function usarCalculo(c: Calculo) {
     setNome(c.produto_nome)
     setCusto(c.custo)
     setMargem(c.margem_pct)
-    setMp(c.marketplace)
+    const preset = PRESETS.find(p => p.valor === c.marketplace)
+    if (preset) { setTaxa(preset.taxa); setMpLabel(preset.valor) }
     toast.success('Valores carregados')
   }
 
   async function salvar() {
     if (!nome.trim()) { toast.error('Informe o nome do produto'); return }
-    if (custo <= 0)   { toast.error('Informe um custo válido'); return }
+    if (custo <= 0) { toast.error('Informe um custo válido'); return }
     setSalvando(true)
     try {
       const res = await fetch('/api/calculadora', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          produto_nome: nome, custo, marketplace: mp, taxa_marketplace: taxa,
-          margem_pct: margem, simples_nacional: simples, preco_ideal: preco, lucro_unidade: lucro,
+          produto_nome: nome, custo, marketplace: mpLabel,
+          taxa_marketplace: taxa / 100, margem_pct: margem,
+          simples_nacional: imposto > 0, preco_ideal: precoIdeal, lucro_unidade: lucro,
         }),
       })
       if (res.ok) { toast.success('Cálculo salvo!'); buscarHistorico() }
@@ -129,187 +126,148 @@ export default function CalculadoraPage() {
     setSalvando(false)
   }
 
-  async function irParaEstoque() {
-    if (!nome.trim() || custo <= 0) { toast.error('Preencha nome e custo primeiro'); return }
-    try {
-      const res = await fetch('/api/estoque', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ produto_nome: nome, quantidade: 0, quantidade_minima: 5, preco_custo: custo, preco_venda: preco, categoria: '' }),
-      })
-      if (res.ok) toast.success('Produto adicionado ao estoque!')
-      else toast.error('Erro ao adicionar ao estoque')
-    } catch { toast.error('Erro interno') }
-  }
-
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: TX }}>Calculadora de Lucro</h1>
-        <p style={{ fontSize: 13, color: MT, marginTop: 4 }}>Calcule o preço ideal com taxas e margem em tempo real</p>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: TX, letterSpacing: '-0.5px', marginBottom: 4 }}>Calculadora de Lucro</h1>
+        <p style={{ fontSize: 14, color: MT }}>Calcule o preço ideal com taxas e margem em tempo real</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
 
         {/* Formulário */}
-        <div style={{ ...CARD, padding: 24 }} className="space-y-5">
+        <div style={{ ...CARD, padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Busca produto */}
-          <div ref={buscaRef} className="relative">
+          <div ref={buscaRef} style={{ position: 'relative' }}>
             <Label>Buscar produto em tendências</Label>
-            <input value={busca} onChange={(e) => setBusca(e.target.value)}
-              placeholder="Digite para preencher automaticamente..." style={INP} />
+            <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Digite para preencher automaticamente..." style={INP} />
             {sugestoes.length > 0 && (
-              <div className="absolute z-20 top-full mt-1 w-full rounded-xl overflow-hidden shadow-2xl"
-                style={{ background: '#0d0a14', border: `1px solid ${BD}` }}>
-                {sugestoes.map((p) => (
+              <div style={{ position: 'absolute', zIndex: 20, top: '100%', marginTop: 4, width: '100%', borderRadius: 12, overflow: 'hidden', background: '#0a0812', border: `1px solid ${BD}`, boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+                {sugestoes.map(p => (
                   <button key={p.id} onClick={() => selecionarProduto(p)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors"
-                    style={{ borderBottom: `1px solid ${BD}` }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                    <span className="text-sm truncate" style={{ color: TX }}>{p.produto_nome}</span>
-                    <span className="text-xs ml-2 flex-shrink-0 font-medium" style={{ color: AC }}>{fmt(p.preco_medio)}</span>
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', textAlign: 'left', borderBottom: `1px solid ${BD}`, background: 'transparent', color: TX, fontSize: 14, cursor: 'pointer', border: 'none', fontFamily: 'inherit' }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.produto_nome}</span>
+                    <span style={{ fontSize: 12, color: AC, fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>{fmt(p.preco_medio)}</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div>
-            <Label>Nome do produto</Label>
-            <input value={nome} onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Vibrador Silicone USB Pro" style={INP} />
-          </div>
+          <div><Label>Nome do produto</Label><input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Vibrador Silicone USB Pro" style={INP} /></div>
+          <div><Label>Custo do fornecedor (R$)</Label><input type="number" value={custo || ''} onChange={e => setCusto(Number(e.target.value))} placeholder="0,00" step={0.01} min={0} style={INP} /></div>
 
           <div>
-            <Label>Custo do fornecedor (R$)</Label>
-            <input type="number" value={custo || ''} onChange={(e) => setCusto(Number(e.target.value))}
-              placeholder="0,00" step={0.01} min={0} style={INP} />
-          </div>
-
-          {/* Slider margem */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label style={{ fontSize: 11, color: MT, fontWeight: 500, letterSpacing: '0.4px' }}>Margem desejada</label>
-              <span className="font-bold" style={{ fontSize: 14, color: AC }}>{margem}%</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <Label>Margem desejada (%)</Label>
+              <input type="number" value={margem} onChange={e => setMargem(Number(e.target.value))} min={0} max={90}
+                style={{ ...INP, width: 70, textAlign: 'center', padding: '4px 8px', fontWeight: 700, color: AC }} />
             </div>
-            <input type="range" min={10} max={80} value={margem}
-              onChange={(e) => setMargem(Number(e.target.value))}
-              className="w-full" style={{ cursor: 'pointer' }} />
-            <div className="flex justify-between mt-1" style={{ fontSize: 11, color: MT2 }}>
-              <span>10%</span><span>25%</span><span>40%</span><span>60%</span><span>80%</span>
-            </div>
+            <input type="range" min={5} max={80} value={margem} onChange={e => setMargem(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer' }} />
           </div>
 
           <div>
-            <Label>Marketplace</Label>
-            <select value={mp} onChange={(e) => setMp(e.target.value)} style={INP}>
-              {MPS.map((m) => (
-                <option key={m.valor} value={m.valor}>
-                  {m.label}{m.taxa > 0 ? ` — taxa ${(m.taxa * 100).toFixed(0)}%` : ' — sem taxa'}
-                </option>
+            <Label>Marketplace (clique para preencher taxa)</Label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+              {PRESETS.map(p => (
+                <button key={p.valor} onClick={() => selecionarPreset(p)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit', border: 'none',
+                    background: mpLabel === p.valor ? 'rgba(147,51,234,0.2)' : 'rgba(255,255,255,0.05)',
+                    color: mpLabel === p.valor ? AC : MT,
+                    outline: mpLabel === p.valor ? '1px solid rgba(147,51,234,0.4)' : 'none',
+                  }}>
+                  {p.label} {p.taxa}%
+                </button>
               ))}
-            </select>
-          </div>
-
-          {/* Toggle Simples Nacional */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p style={{ fontSize: 14, color: TX, fontWeight: 500 }}>Simples Nacional</p>
-              <p style={{ fontSize: 12, color: MT, marginTop: 2 }}>Adiciona 6% de imposto</p>
             </div>
-            <button onClick={() => setSimples(!simples)}
-              className="w-11 h-6 rounded-full flex items-center px-0.5 transition-colors"
-              style={{ background: simples ? AC : 'rgba(255,255,255,0.1)' }}>
-              <div className="w-4 h-4 rounded-full bg-white transition-transform"
-                style={{ transform: simples ? 'translateX(20px)' : 'translateX(0)' }} />
-            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <div>
+                <label style={{ fontSize: 10, color: MT, fontWeight: 500 }}>Taxa marketplace (%)</label>
+                <input type="number" value={taxa} onChange={e => setTaxa(Number(e.target.value))} min={0} max={50} step={0.1} style={{ ...INP, marginTop: 4 }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: MT, fontWeight: 500 }}>Imposto (%)</label>
+                <input type="number" value={imposto} onChange={e => setImposto(Number(e.target.value))} min={0} max={30} step={0.1} style={{ ...INP, marginTop: 4 }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: MT, fontWeight: 500 }}>Outras taxas (%)</label>
+                <input type="number" value={outrasTaxas} onChange={e => setOutrasTaxas(Number(e.target.value))} min={0} max={30} step={0.1} style={{ ...INP, marginTop: 4 }} />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Resultado */}
-        <div className="space-y-4">
-          <div style={{ ...CARD, padding: 24, background: 'rgba(200,64,224,0.08)', borderColor: 'rgba(200,64,224,0.25)' }}>
-            <p className="mb-5 font-semibold" style={{ fontSize: 11, color: AC, letterSpacing: '0.5px' }}>RESULTADO EM TEMPO REAL</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ ...CARD, padding: 24, background: 'rgba(147,51,234,0.08)', borderColor: 'rgba(147,51,234,0.25)' }}>
+            <p style={{ marginBottom: 20, fontWeight: 600, fontSize: 11, color: AC, letterSpacing: '0.5px' }}>RESULTADO EM TEMPO REAL</p>
 
-            <div className="space-y-3 mb-5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
               {[
-                { label: 'Custo do produto',                     val: fmt(custo)     },
-                { label: `Taxa ${mpLabel} (${(taxa * 100).toFixed(0)}%)`, val: fmt(taxaVal)   },
-                ...(simples ? [{ label: 'Simples Nacional (6%)', val: fmt(impVal) }] : []),
-                { label: `Sua margem (${margem}%)`,              val: fmt(margemVal) },
+                { label: 'Custo do produto', val: fmt(custo) },
+                { label: `Taxa marketplace ${taxa}%`, val: fmt(taxaVal) },
+                ...(imposto > 0 ? [{ label: `Imposto ${imposto}%`, val: fmt(impostoVal) }] : []),
+                ...(outrasTaxas > 0 ? [{ label: `Outras taxas ${outrasTaxas}%`, val: fmt(outrasTaxasVal) }] : []),
+                { label: `Sua margem ${margem}%`, val: fmt(margemVal) },
               ].map(({ label, val }) => (
-                <div key={label} className="flex items-center justify-between py-2"
-                  style={{ borderBottom: '1px solid rgba(200,64,224,0.12)' }}>
+                <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid rgba(147,51,234,0.12)' }}>
                   <span style={{ fontSize: 13, color: MT }}>{label}</span>
                   <span style={{ fontSize: 13, color: TX, fontWeight: 500 }}>{val}</span>
                 </div>
               ))}
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 rounded-xl"
-                style={{ background: 'rgba(200,64,224,0.12)', border: `1px solid rgba(200,64,224,0.3)` }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 12, background: 'rgba(147,51,234,0.12)', border: '1px solid rgba(147,51,234,0.3)' }}>
                 <span style={{ fontWeight: 600, color: TX }}>Preço ideal</span>
-                <span style={{ fontSize: 22, fontWeight: 700, color: AC }}>{preco > 0 ? fmt(preco) : '—'}</span>
+                <span style={{ fontSize: 22, fontWeight: 700, color: AC }}>{precoIdeal > 0 ? fmt(precoIdeal) : '—'}</span>
               </div>
-              <div className="flex items-center justify-between p-4 rounded-xl"
-                style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 12, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)' }}>
                 <span style={{ fontWeight: 600, color: TX }}>Lucro líquido</span>
                 <span style={{ fontSize: 22, fontWeight: 700, color: GR }}>{lucro > 0 ? fmt(lucro) : '—'}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 12, background: CARD_BG, border: `1px solid ${BD}` }}>
+                <span style={{ fontWeight: 600, color: TX }}>Margem real</span>
+                <span style={{ fontSize: 22, fontWeight: 700, color: TX }}>{margemReal > 0 ? margemReal.toFixed(1) + '%' : '—'}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <button onClick={salvar} disabled={salvando}
-              className="flex-1 py-3 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
-              style={{ background: AC }}>
-              {salvando ? 'Salvando...' : 'Salvar cálculo'}
-            </button>
-            <button onClick={irParaEstoque}
-              className="flex-1 py-3 rounded-lg text-sm font-medium transition-colors"
-              style={{ border: `1px solid ${BD}`, color: MT }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = TX }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = MT }}>
-              + Adicionar ao estoque
-            </button>
-          </div>
+          <button onClick={salvar} disabled={salvando}
+            style={{ padding: 12, borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#fff', background: BTN, border: 'none', cursor: 'pointer', opacity: salvando ? 0.5 : 1 }}>
+            {salvando ? 'Salvando...' : 'Salvar cálculo'}
+          </button>
         </div>
       </div>
 
-      {/* Histórico */}
       {historico.length > 0 && (
         <div style={{ ...CARD, overflow: 'hidden' }}>
-          <div className="px-6 py-4" style={{ borderBottom: `1px solid ${BD}` }}>
-            <p className="font-semibold" style={{ color: TX }}>Últimos cálculos salvos</p>
+          <div style={{ padding: '16px 24px', borderBottom: `1px solid ${BD}` }}>
+            <p style={{ fontWeight: 600, color: TX }}>Últimos cálculos salvos</p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full" style={{ fontSize: 13 }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: `1px solid ${BD}` }}>
-                  {['Produto', 'Custo', 'Margem', 'Marketplace', 'Preço ideal', 'Lucro', ''].map((col) => (
-                    <th key={col} className="text-left px-5 py-3"
-                      style={{ fontSize: 11, color: MT, fontWeight: 500 }}>{col}</th>
+                <tr style={{ background: 'rgba(147,51,234,0.06)', borderBottom: `1px solid ${BD}` }}>
+                  {['Produto', 'Custo', 'Margem', 'Marketplace', 'Preço ideal', 'Lucro', ''].map(col => (
+                    <th key={col} style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, color: MT, fontWeight: 500 }}>{col}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {historico.map((c) => (
+                {historico.map(c => (
                   <tr key={c.id} style={{ borderTop: `1px solid ${BD}` }}>
-                    <td className="px-5 py-3 font-medium" style={{ color: TX }}>{c.produto_nome}</td>
-                    <td className="px-5 py-3" style={{ color: MT }}>{fmt(c.custo)}</td>
-                    <td className="px-5 py-3" style={{ color: MT }}>{c.margem_pct}%</td>
-                    <td className="px-5 py-3 capitalize" style={{ color: MT }}>{c.marketplace}</td>
-                    <td className="px-5 py-3 font-medium" style={{ color: AC }}>{fmt(c.preco_ideal)}</td>
-                    <td className="px-5 py-3 font-medium" style={{ color: GR }}>{fmt(c.lucro_unidade)}</td>
-                    <td className="px-5 py-3">
+                    <td style={{ padding: '12px 16px', fontWeight: 500, color: TX }}>{c.produto_nome}</td>
+                    <td style={{ padding: '12px 16px', color: MT }}>{fmt(c.custo)}</td>
+                    <td style={{ padding: '12px 16px', color: MT }}>{c.margem_pct}%</td>
+                    <td style={{ padding: '12px 16px', color: MT, textTransform: 'capitalize' }}>{c.marketplace}</td>
+                    <td style={{ padding: '12px 16px', fontWeight: 500, color: AC }}>{fmt(c.preco_ideal)}</td>
+                    <td style={{ padding: '12px 16px', fontWeight: 500, color: GR }}>{fmt(c.lucro_unidade)}</td>
+                    <td style={{ padding: '12px 16px' }}>
                       <button onClick={() => usarCalculo(c)}
-                        className="px-3 py-1 rounded-lg text-xs transition-colors"
-                        style={{ background: 'rgba(255,255,255,0.04)', color: MT, border: `1px solid ${BD}` }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = TX }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = MT }}>
+                        style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, background: CARD_BG, color: MT, border: `1px solid ${BD}`, cursor: 'pointer' }}>
                         Usar novamente
                       </button>
                     </td>

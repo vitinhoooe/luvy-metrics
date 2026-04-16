@@ -6,66 +6,53 @@ export const maxDuration = 30
 
 export async function POST(req: Request) {
   try {
+    const { messages } = await req.json()
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return new Response('Não autorizado', { status: 401 })
 
-    const { messages } = await req.json()
-
-    const [resTendencias, resEstoque, resCalculos] = await Promise.all([
+    const [tendencias, estoque] = await Promise.all([
       supabase
         .from('produtos_tendencia')
-        .select('produto_nome, crescimento_pct, preco_medio, vendas_hoje, fonte')
+        .select('produto_nome, crescimento_pct, preco_medio, vendas_hoje, fonte, url_produto')
         .order('crescimento_pct', { ascending: false })
         .limit(10),
       supabase
         .from('estoque_usuario')
-        .select('produto_nome, quantidade, quantidade_minima, preco_custo, preco_venda')
-        .eq('user_id', user.id)
+        .select('produto_nome, quantidade, quantidade_minima, preco_custo, preco_venda, categoria')
+        .eq('user_id', user?.id ?? '')
         .eq('ativo', true),
-      supabase
-        .from('calculos')
-        .select('produto_nome, custo, preco_ideal, lucro_unidade, marketplace')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5),
     ])
 
     const contexto = `
-TENDÊNCIAS DE HOJE (ordem decrescente de crescimento):
-${resTendencias.data?.map((p) =>
-  `- ${p.produto_nome}: +${p.crescimento_pct?.toFixed(0)}% | ${p.vendas_hoje} vendas/dia | R$${p.preco_medio?.toFixed(2)} | ${p.fonte}`
-).join('\n') || 'Nenhuma tendência coletada ainda. Dados são coletados às 6h.'}
+TENDÊNCIAS DE HOJE:
+${tendencias.data?.map(p =>
+  `- ${p.produto_nome}: +${p.crescimento_pct}% | ${p.vendas_hoje} vendas/dia | R$${p.preco_medio} | ${p.fonte}`
+).join('\n') || 'Nenhuma tendência coletada ainda'}
 
-ESTOQUE ATUAL DO USUÁRIO:
-${resEstoque.data?.length
-  ? resEstoque.data.map((e) => {
-      const status = e.quantidade <= 0 ? 'ZERADO' : e.quantidade <= e.quantidade_minima ? 'BAIXO' : 'OK'
-      return `- ${e.produto_nome}: ${e.quantidade} un (${status}) | custo R$${e.preco_custo?.toFixed(2)} | venda R$${e.preco_venda?.toFixed(2)}`
-    }).join('\n')
-  : 'Estoque vazio. Sugira que o usuário adicione produtos na aba Estoque.'}
-
-ÚLTIMOS CÁLCULOS DE LUCRO:
-${resCalculos.data?.map((c) =>
-  `- ${c.produto_nome}: custo R$${c.custo?.toFixed(2)} → venda R$${c.preco_ideal?.toFixed(2)} | lucro R$${c.lucro_unidade?.toFixed(2)} (${c.marketplace})`
-).join('\n') || 'Nenhum cálculo salvo ainda.'}`
+ESTOQUE DO USUÁRIO:
+${estoque.data?.length ? estoque.data.map(e => {
+  const status = e.quantidade <= 0 ? 'ZERADO' :
+    e.quantidade <= e.quantidade_minima ? 'BAIXO' : 'OK'
+  return `- ${e.produto_nome}: ${e.quantidade} unidades (${status}) | custo R$${e.preco_custo} | venda R$${e.preco_venda}`
+}).join('\n') : 'Nenhum produto cadastrado no estoque'}
+`
 
     const result = streamText({
-      model: anthropic('claude-sonnet-4-6'),
-      system: `Você é o assistente especialista do LuvyMetrics para donos de sex shop.
+      model: anthropic('claude-sonnet-4-20250514'),
+      system: `Você é o assistente especialista do LuvyMetrics para donos de sex shop no Brasil.
 
 ${contexto}
 
-REGRAS OBRIGATÓRIAS:
-- Responda sempre em português do Brasil correto
-- Seja direto e prático, sem enrolação
-- Use os dados reais acima para embasar todas as respostas
-- Ao sugerir o que comprar, cite produtos específicos com o percentual de crescimento real
-- Ao falar de estoque, mostre os dados reais do usuário
-- Máximo 2 emojis por resposta
-- Nunca invente dados que não estejam no contexto acima
-- Máximo 150 palavras por resposta`,
+REGRAS:
+- Responda SEMPRE em português do Brasil correto
+- Seja direto e prático — máximo 120 palavras por resposta
+- Use SEMPRE os dados reais acima para responder
+- Quando perguntarem o que comprar, cite produtos específicos com % real
+- Quando perguntarem sobre estoque, mostre os dados reais
+- Use no máximo 2 emojis por resposta
+- NUNCA invente dados que não estão acima`,
       messages,
+      maxOutputTokens: 300,
     })
 
     // SSE manual — compatível com o leitor do cliente
@@ -85,13 +72,13 @@ REGRAS OBRIGATÓRIAS:
 
     return new Response(readable, {
       headers: {
-        'Content-Type':  'text/event-stream',
+        'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection':    'keep-alive',
+        'Connection': 'keep-alive',
       },
     })
-  } catch (e) {
-    console.error('Erro bot:', e)
+  } catch (error) {
+    console.error('Erro no bot:', error)
     return new Response('Erro interno', { status: 500 })
   }
 }

@@ -11,10 +11,10 @@ const FONTES     = ['Todos', 'Mercado Livre', 'Shopee', 'Google Trends']
 const CATEGORIAS = ['Todos', 'Vibradores', 'Géis', 'Plugs', 'Roupas Íntimas', 'Acessórios', 'Outros']
 const PERIODOS   = ['Hoje', '7 dias', '30 dias']
 
-const TX  = '#f5f0ff'
-const MT  = '#9d8faa'
+const TX  = '#f0ebff'
+const MT  = '#8b7fa0'
 const AC  = '#c840e0'
-const BD  = 'rgba(200,64,224,0.15)'
+const BD  = 'rgba(200,64,224,0.18)'
 
 const SAZONALIDADE = [
   { evento: 'Carnaval',          data: '2027-02-14', emoji: '🎭', produtos: ['Fantasias sensuais', 'Acessórios de festa', 'Gel corporal'],       cor: 'from-orange-600/20 to-yellow-600/20', borda: 'border-orange-500/20' },

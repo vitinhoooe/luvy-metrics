@@ -2,6 +2,11 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+const TX = '#f0ebff'
+const MT = '#8b7fa0'
+const AC = '#c840e0'
+const BD = 'rgba(200,64,224,0.18)'
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [enviado, setEnviado] = useState(false)
@@ -33,31 +38,32 @@ export default function LoginPage() {
             background: 'linear-gradient(135deg, #c840e0, #9333ea)',
             borderRadius: '16px', display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px', fontSize: '26px'
-          }}>⚡</div>
-          <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#f5f0ff', letterSpacing: '-1px', margin: '0 0 8px' }}>
-            Luvy<span style={{ color: '#c840e0' }}>Metrics</span>
+            margin: '0 auto 16px', fontSize: '24px',
+            fontWeight: '900', color: '#fff', letterSpacing: '-1px'
+          }}>L</div>
+          <h1 style={{ fontSize: '28px', fontWeight: '800', color: TX, letterSpacing: '-1px', margin: '0 0 8px' }}>
+            Luvy<span style={{ color: AC }}>Metrics</span>
           </h1>
-          <p style={{ color: '#9d8faa', fontSize: '15px', margin: 0 }}>
+          <p style={{ color: MT, fontSize: '15px', margin: 0 }}>
             O radar de tendências do seu sex shop
           </p>
         </div>
 
         <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(200,64,224,0.2)',
+          background: 'rgba(255,255,255,0.04)',
+          border: `1px solid ${BD}`,
           borderRadius: '20px', padding: '36px'
         }}>
           {!enviado ? (
             <>
-              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#f5f0ff', margin: '0 0 8px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: TX, margin: '0 0 8px' }}>
                 Entrar na plataforma
               </h2>
-              <p style={{ color: '#9d8faa', fontSize: '14px', margin: '0 0 28px', lineHeight: '1.6' }}>
+              <p style={{ color: MT, fontSize: '14px', margin: '0 0 28px', lineHeight: '1.6' }}>
                 Enviaremos um link mágico para seu email. Sem senha, sem complicação.
               </p>
               <form onSubmit={handleLogin}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#9d8faa', marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: MT, marginBottom: '8px' }}>
                   Seu email
                 </label>
                 <input
@@ -69,16 +75,18 @@ export default function LoginPage() {
                   style={{
                     width: '100%', padding: '14px 16px',
                     background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(200,64,224,0.25)',
-                    borderRadius: '10px', color: '#f5f0ff',
+                    border: `1px solid ${BD}`,
+                    borderRadius: '10px', color: TX,
                     fontSize: '15px', outline: 'none',
                     marginBottom: '20px', fontFamily: 'inherit',
                     boxSizing: 'border-box'
                   }}
+                  onFocus={e => (e.target.style.borderColor = AC)}
+                  onBlur={e => (e.target.style.borderColor = BD)}
                 />
                 <button type="submit" disabled={loading} style={{
                   width: '100%', padding: '14px',
-                  background: loading ? 'rgba(200,64,224,0.5)' : 'linear-gradient(135deg, #c840e0, #9333ea)',
+                  background: loading ? 'rgba(147,51,234,0.5)' : 'linear-gradient(135deg, #c840e0, #9333ea)',
                   border: 'none', borderRadius: '10px',
                   color: '#fff', fontSize: '15px', fontWeight: '600',
                   cursor: loading ? 'not-allowed' : 'pointer',
@@ -87,24 +95,24 @@ export default function LoginPage() {
                   {loading ? 'Enviando...' : 'Entrar com link mágico →'}
                 </button>
               </form>
-              <p style={{ textAlign: 'center', color: '#9d8faa', fontSize: '13px', margin: '20px 0 0' }}>
+              <p style={{ textAlign: 'center', color: MT, fontSize: '13px', margin: '20px 0 0' }}>
                 Sem senha. Sem complicação.
               </p>
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📧</div>
-              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#f5f0ff', margin: '0 0 12px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: TX, margin: '0 0 12px' }}>
                 Link enviado!
               </h2>
-              <p style={{ color: '#9d8faa', fontSize: '14px', lineHeight: '1.7', margin: '0 0 24px' }}>
+              <p style={{ color: MT, fontSize: '14px', lineHeight: '1.7', margin: '0 0 24px' }}>
                 Verifique sua caixa de entrada em{' '}
-                <strong style={{ color: '#c840e0' }}>{email}</strong>{' '}
+                <strong style={{ color: AC }}>{email}</strong>{' '}
                 e clique no link para acessar.
               </p>
               <button onClick={() => setEnviado(false)} style={{
                 background: 'transparent', border: 'none',
-                color: '#9d8faa', fontSize: '14px',
+                color: MT, fontSize: '14px',
                 cursor: 'pointer', fontFamily: 'inherit'
               }}>
                 Usar outro email
@@ -113,11 +121,11 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p style={{ textAlign: 'center', color: '#9d8faa', fontSize: '13px', marginTop: '24px' }}>
+        <p style={{ textAlign: 'center', color: MT, fontSize: '13px', marginTop: '24px' }}>
           Ainda não tem conta?{' '}
           <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#c840e0', textDecoration: 'none' }}>
+            style={{ color: AC, textDecoration: 'none' }}>
             Assinar agora →
           </a>
         </p>
