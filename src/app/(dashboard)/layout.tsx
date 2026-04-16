@@ -1,54 +1,46 @@
+import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Toaster } from 'sonner'
-import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/Sidebar'
-import NotificationBell from '@/components/NotificationBell'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children
+}: {
+  children: React.ReactNode
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
   const { data: perfil } = await supabase
     .from('perfis')
-    .select('*')
-    .eq('user_id', user.id)
+    .select('nome, nome_loja, trial_expira_em, plano')
+    .eq('id', user.id)
     .single()
 
-  // Redireciona novos usuários para o onboarding
-  if (perfil && perfil.onboarding_completo === false) {
-    redirect('/onboarding')
-  }
-
-  const diasTrial = perfil?.trial_expira_em
-    ? Math.max(0, Math.ceil((new Date(perfil.trial_expira_em).getTime() - Date.now()) / 86_400_000))
-    : 7
-
   return (
-    <div className="min-h-screen bg-[#08060d] flex">
-      <Sidebar
-        nomeLoja={perfil?.nome_loja ?? ''}
-        nomeUsuario={perfil?.nome ?? user.email ?? ''}
-        diasTrial={diasTrial}
-      />
-
-      <div className="flex-1 ml-60 flex flex-col min-h-screen">
-        {/* Header */}
-        <header className="sticky top-0 z-30 bg-[#08060d]/80 backdrop-blur-sm border-b border-white/5 px-6 py-3 flex items-center justify-end gap-3">
-          <NotificationBell userId={user.id} />
-        </header>
-
-        {/* Conteúdo */}
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
-      </div>
-
+    <div style={{
+      display: 'flex',
+      minHeight: '100vh',
+      background: '#08060d',
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      color: '#f5f0ff'
+    }}>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <Sidebar user={user} perfil={perfil} />
+      <main style={{
+        marginLeft: '240px',
+        flex: 1,
+        padding: '32px',
+        minHeight: '100vh',
+        background: '#08060d'
+      }}>
+        {children}
+      </main>
       <Toaster
         position="top-right"
         toastOptions={{
-          style: { background: '#0d0a13', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' },
+          style: { background: '#0d0a14', border: '1px solid rgba(200,64,224,0.2)', color: '#f5f0ff' },
         }}
       />
     </div>
