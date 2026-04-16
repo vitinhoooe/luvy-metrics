@@ -70,25 +70,24 @@ export async function GET() {
     totalColetados++
   }
 
-  // ─── FONTE 1: Mercado Livre (categoria + termos) ──────────────
+  // ─── FONTE 1: Mercado Livre (10 termos em paralelo) ────────────
   async function coletarML() {
-    // Categoria adultos
-    const urls = [
-      'https://api.mercadolibre.com/sites/MLB/search?category=MLB1648&sort=sold_quantity_desc&limit=30',
-      ...TERMOS.map(t => `https://api.mercadolibre.com/sites/MLB/search?q=${encodeURIComponent(t + ' sex shop')}&sort=sold_quantity_desc&limit=10`)
-    ]
+    const seen = new Set<string>()
 
-    for (const url of urls) {
+    async function buscarTermo(termo: string) {
       try {
+        const url = `https://api.mercadolibre.com/sites/MLB/search?q=${encodeURIComponent(termo)}&sort=sold_quantity_desc&limit=10`
         const res = await fetch(url, { cache: 'no-store' })
-        if (!res.ok) continue
+        if (!res.ok) return
         const dados = await res.json()
         const items = (dados.results ?? []) as any[]
 
-        for (const item of items.slice(0, 20)) {
-          const termo = url.includes('?q=') ? decodeURIComponent(url.split('?q=')[1].split('&')[0]) : 'Adultos'
+        for (const item of items) {
+          const nome = item.title as string
+          if (seen.has(nome.toLowerCase())) continue
+          seen.add(nome.toLowerCase())
           await upsertProduto({
-            nome: item.title,
+            nome,
             preco: item.price,
             vendas: item.sold_quantity ?? 0,
             url: item.permalink ?? null,
@@ -102,6 +101,8 @@ export async function GET() {
         console.error('Erro ML:', err)
       }
     }
+
+    await Promise.allSettled(TERMOS.map(t => buscarTermo(t)))
   }
 
   // ─── FONTE 2: Shopee (tentativa) ──────────────────────────────
