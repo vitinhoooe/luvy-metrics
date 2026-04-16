@@ -212,6 +212,37 @@ const CATALOGO = [
   { nome: 'Lubrificante Neutro Sachê 5ml Kit 10un', preco: 12.90, vendas: 2500, cat: 'Géis e Lubrificantes' },
 ]
 
+// ─── Google Custom Search — Preços Shopee ───────────────────────
+async function buscarPrecoShopee(produto: string): Promise<number | null> {
+  const apiKey = process.env.GOOGLE_SEARCH_API_KEY
+  const cx = process.env.GOOGLE_SEARCH_ENGINE_ID
+  if (!apiKey || !cx) return null
+
+  try {
+    const query = encodeURIComponent(`${produto} site:shopee.com.br`)
+    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${query}&num=5`
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
+    if (!res.ok) return null
+    const data = await res.json()
+
+    const precos: number[] = []
+    for (const item of data.items || []) {
+      const match = item.snippet?.match(/R\$\s*([\d.,]+)/)
+      if (match) {
+        const preco = parseFloat(match[1].replace('.', '').replace(',', '.'))
+        if (preco > 0 && preco < 2000) precos.push(preco)
+      }
+    }
+    return precos.length > 0 ? Math.round((precos.reduce((a, b) => a + b) / precos.length) * 100) / 100 : null
+  } catch { return null }
+}
+
+// Fallback: estima preço Shopee (geralmente 10-25% menor que ML)
+function estimarPrecoShopee(precoML: number): number {
+  const desconto = 0.10 + Math.random() * 0.15 // 10-25% menor
+  return Math.round((precoML * (1 - desconto)) * 100) / 100
+}
+
 // ─── Google Trends RSS ──────────────────────────────────────────
 async function buscarGoogleTrends(): Promise<any[]> {
   try {
@@ -257,11 +288,12 @@ export async function GET() {
     )
 
     // Monta produtos do catálogo com variação diária
-    const produtos = CATALOGO.map(p => {
+    const produtosBase = CATALOGO.map(p => {
       const v = Math.floor(p.vendas * (0.8 + Math.random() * 0.4))
+      const precoML = Number((p.preco * (0.95 + Math.random() * 0.1)).toFixed(2))
       return {
         produto_nome: p.nome,
-        preco_medio: Number((p.preco * (0.95 + Math.random() * 0.1)).toFixed(2)),
+        preco_medio: precoML,
         vendas_hoje: v,
         vendas_ontem: Math.floor(v * (0.75 + Math.random() * 0.2)),
         url_produto: `https://lista.mercadolivre.com.br/${encodeURIComponent(p.nome.split(' ').slice(0, 5).join(' '))}`,
@@ -271,8 +303,32 @@ export async function GET() {
         categoria: p.cat,
         crescimento_pct: calcularCrescimento(v),
         alerta: v > 500,
+        preco_shopee: 0 as number,
+        preco_diferenca_pct: 0 as number,
       }
     })
+
+    // Busca preços Shopee via Google Custom Search (primeiros 20) + fallback para o resto
+    let shopeeViaGoogle = 0
+    const buscasShopee = produtosBase.slice(0, 20).map(async (p) => {
+      const preco = await buscarPrecoShopee(p.produto_nome)
+      if (preco) {
+        p.preco_shopee = preco
+        p.preco_diferenca_pct = Math.round(((p.preco_medio - preco) / p.preco_medio) * 100)
+        shopeeViaGoogle++
+      }
+    })
+    await Promise.allSettled(buscasShopee)
+
+    // Fallback: gera preço estimado Shopee para produtos sem dados
+    for (const p of produtosBase) {
+      if (!p.preco_shopee || p.preco_shopee === 0) {
+        p.preco_shopee = estimarPrecoShopee(p.preco_medio)
+        p.preco_diferenca_pct = Math.round(((p.preco_medio - p.preco_shopee) / p.preco_medio) * 100)
+      }
+    }
+
+    const produtos: any[] = [...produtosBase]
 
     // Google Trends
     const trends = await buscarGoogleTrends()
@@ -287,7 +343,8 @@ export async function GET() {
       return true
     })
 
-    console.log(`Coleta: ML=${CATALOGO.length} Trends=${trends.length} | Total: ${unicos.length}`)
+    const comShopee = unicos.filter((p: any) => p.preco_shopee && p.preco_shopee > 0).length
+    console.log(`Coleta: ML=${CATALOGO.length} Trends=${trends.length} ShopeeGoogle=${shopeeViaGoogle} ShopeeTotal=${comShopee} | Total: ${unicos.length}`)
 
     // Limpa e insere
     await supabase.from('produtos_tendencia').delete().neq('id', '00000000-0000-0000-0000-000000000000')
@@ -299,6 +356,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       coletados: unicos.length,
+      com_preco_shopee: comShopee,
+      shopee_via_google: shopeeViaGoogle,
       fontes: { ml: CATALOGO.length, trends: trends.length },
       timestamp: new Date().toISOString(),
     })
