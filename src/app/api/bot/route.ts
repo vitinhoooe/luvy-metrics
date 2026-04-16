@@ -1,16 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { anthropic } from '@ai-sdk/anthropic'
+import { streamText } from 'ai'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-
-const SYSTEM_PROMPT = `Você é o assistente do LuvyMetrics, especialista em tendências de sex shop.
-Você tem acesso aos dados de estoque e tendências do usuário.
-Responda sempre em português do Brasil, seja direto e prático.
-Use emojis com moderação para tornar as respostas mais amigáveis.
-Quando sugerir produtos, baseie-se nos dados reais fornecidos no contexto.
-Nunca invente dados que não foram fornecidos.`
+export const maxDuration = 30
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,74 +23,72 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return new Response('Não autorizado', { status: 401 })
 
-    const { mensagem, historico = [] } = await req.json()
-    if (!mensagem?.trim()) return new Response('Mensagem inválida', { status: 400 })
+    const { messages } = await req.json()
 
-    // Busca contexto do usuário
     const [resTendencias, resEstoque, resCalculos] = await Promise.all([
       supabase
         .from('produtos_tendencia')
-        .select('produto_nome, crescimento_pct, vendas_hoje, preco_medio, categoria')
+        .select('produto_nome, crescimento_pct, preco_medio, vendas_hoje, fonte')
         .order('crescimento_pct', { ascending: false })
         .limit(10),
       supabase
         .from('estoque_usuario')
         .select('produto_nome, quantidade, quantidade_minima, preco_custo, preco_venda')
         .eq('user_id', user.id)
-        .eq('ativo', true)
-        .order('quantidade'),
+        .eq('ativo', true),
       supabase
         .from('calculos')
-        .select('produto_nome, custo, preco_ideal, lucro_unidade, margem_pct')
+        .select('produto_nome, custo, preco_ideal, lucro_unidade, marketplace')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5),
     ])
 
     const contexto = `
-## CONTEXTO DO USUÁRIO
+DADOS REAIS DO USUÁRIO (use sempre estes dados nas respostas):
 
-### Top 10 Produtos em Tendência agora:
+TENDÊNCIAS DE HOJE (ordem decrescente de crescimento):
 ${resTendencias.data?.map((p) =>
-  `- ${p.produto_nome}: +${p.crescimento_pct?.toFixed(0)}% crescimento, ${p.vendas_hoje} vendas/dia, preço médio R$${p.preco_medio?.toFixed(2)}`
-).join('\n') || 'Nenhum dado disponível'}
+  `- ${p.produto_nome}: +${p.crescimento_pct?.toFixed(0)}% | ${p.vendas_hoje} vendas/dia | R$${p.preco_medio?.toFixed(2)} | ${p.fonte}`
+).join('\n') || 'Nenhuma tendência coletada ainda. Informe ao usuário que os dados são coletados às 6h.'}
 
-### Estoque atual do usuário:
+ESTOQUE ATUAL DO USUÁRIO:
 ${resEstoque.data?.length
-  ? resEstoque.data.map((i) => {
-      const status = i.quantidade === 0 ? '🔴 ZERADO' : i.quantidade <= i.quantidade_minima ? '🟡 BAIXO' : '🟢 OK'
-      return `- ${i.produto_nome}: ${i.quantidade} unidades ${status} (mín: ${i.quantidade_minima}) | custo: R$${i.preco_custo?.toFixed(2)} | venda: R$${i.preco_venda?.toFixed(2)}`
+  ? resEstoque.data.map((e) => {
+      const status = e.quantidade <= 0 ? 'ZERADO' : e.quantidade <= e.quantidade_minima ? 'BAIXO' : 'OK'
+      return `- ${e.produto_nome}: ${e.quantidade} un (${status}) | custo R$${e.preco_custo?.toFixed(2)} | venda R$${e.preco_venda?.toFixed(2)}`
     }).join('\n')
-  : 'Estoque vazio'}
+  : 'Estoque vazio. Sugira que o usuário adicione produtos.'}
 
-### Últimos cálculos de lucro:
+ÚLTIMOS CÁLCULOS DE LUCRO:
 ${resCalculos.data?.map((c) =>
-  `- ${c.produto_nome}: custo R$${c.custo?.toFixed(2)}, preço ideal R$${c.preco_ideal?.toFixed(2)}, lucro R$${c.lucro_unidade?.toFixed(2)} (${c.margem_pct}% margem)`
-).join('\n') || 'Nenhum cálculo salvo'}
-`
+  `- ${c.produto_nome}: custo R$${c.custo?.toFixed(2)} → venda R$${c.preco_ideal?.toFixed(2)} | lucro R$${c.lucro_unidade?.toFixed(2)} (${c.marketplace})`
+).join('\n') || 'Nenhum cálculo salvo ainda.'}`
 
-    // Monta histórico de mensagens para o modelo
-    const mensagens: Anthropic.MessageParam[] = [
-      ...(historico as Array<{ role: 'user' | 'assistant'; content: string }>).slice(-10),
-      { role: 'user', content: `${contexto}\n\n---\n\n${mensagem}` },
-    ]
+    const result = streamText({
+      model: anthropic('claude-sonnet-4-6'),
+      system: `Você é o assistente especialista do LuvyMetrics para donos de sex shop.
 
-    // Streaming
-    const stream = await anthropic.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: mensagens,
+${contexto}
+
+REGRAS OBRIGATÓRIAS:
+- Responda sempre em português do Brasil correto
+- Seja direto e prático — sem enrolação
+- Use os dados reais acima para embasar as respostas
+- Ao sugerir o que comprar, cite produtos específicos com o % de crescimento real
+- Ao falar de estoque, mostre os dados reais do usuário
+- Máximo 2 emojis por resposta
+- Nunca invente dados que não estejam no contexto acima`,
+      messages,
     })
 
+    // Converte para SSE simples compatível com o leitor manual do cliente
     const readable = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder()
         try {
-          for await (const chunk of stream) {
-            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`))
-            }
+          for await (const chunk of result.textStream) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ textDelta: chunk })}\n\n`))
           }
           controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         } finally {
@@ -106,11 +98,7 @@ ${resCalculos.data?.map((c) =>
     })
 
     return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
     })
   } catch (e) {
     console.error('Erro bot:', e)

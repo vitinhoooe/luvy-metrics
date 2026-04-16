@@ -4,195 +4,224 @@ import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import type { EstoqueItem } from '@/types'
 
-type StatusEstoque = 'ok' | 'baixo' | 'zerado'
+const CATEGORIAS = ['Vibradores', 'Géis', 'Plugs', 'Roupas íntimas', 'Acessórios', 'Preservativos', 'Outros']
+const MOTIVOS_SAIDA = ['Venda', 'Avaria', 'Outros']
 
-function statusItem(item: EstoqueItem): StatusEstoque {
-  if (item.quantidade === 0) return 'zerado'
-  if (item.quantidade <= item.quantidade_minima) return 'baixo'
+function statusItem(i: EstoqueItem) {
+  if (i.quantidade === 0) return 'zerado'
+  if (i.quantidade <= i.quantidade_minima) return 'baixo'
   return 'ok'
 }
 
-const statusConfig = {
-  ok:     { label: '🟢 OK',     cor: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  baixo:  { label: '🟡 Baixo',  cor: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  zerado: { label: '🔴 Zerado', cor: 'bg-red-500/10 text-red-400 border-red-500/20' },
+const STATUS_STYLE: Record<string, React.CSSProperties> = {
+  ok:     { background: 'var(--green-soft)', color: 'var(--green)',  border: '1px solid rgba(34,197,94,0.2)'  },
+  baixo:  { background: 'var(--gold-soft)',  color: 'var(--gold)',   border: '1px solid rgba(245,158,11,0.2)' },
+  zerado: { background: 'var(--red-soft)',   color: 'var(--red)',    border: '1px solid rgba(239,68,68,0.2)'  },
+}
+const STATUS_LABEL = { ok: '● OK', baixo: '● Baixo', zerado: '● Zerado' }
+
+function fmt(v: number) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }
+
+const inputStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
+  borderRadius: 8, padding: '9px 12px', color: 'var(--text)',
+  fontSize: 14, width: '100%', outline: 'none',
 }
 
-function fmt(v: number, tipo: 'moeda' | 'pct' | 'num' = 'num') {
-  if (tipo === 'moeda') return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  if (tipo === 'pct')   return `${v.toFixed(1)}%`
-  return v.toLocaleString('pt-BR')
+function Label({ children }: { children: React.ReactNode }) {
+  return <label className="block mb-1" style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500, letterSpacing: '0.4px' }}>{children}</label>
 }
 
-function margem(item: EstoqueItem) {
-  if (!item.preco_custo || !item.preco_venda || item.preco_venda === 0) return 0
-  return ((item.preco_venda - item.preco_custo) / item.preco_venda) * 100
-}
+// ─── Modal Produto ────────────────────────────────────────────────
+function ModalProduto({ item, onFechar, onSalvar }: { item?: EstoqueItem; onFechar: () => void; onSalvar: () => void }) {
+  const [nome,     setNome]     = useState(item?.produto_nome ?? '')
+  const [qtd,      setQtd]      = useState(item?.quantidade ?? 0)
+  const [qtdMin,   setQtdMin]   = useState(item?.quantidade_minima ?? 5)
+  const [custo,    setCusto]    = useState(item?.preco_custo ?? 0)
+  const [venda,    setVenda]    = useState(item?.preco_venda ?? 0)
+  const [cat,      setCat]      = useState(item?.categoria ?? '')
+  const [autoPreco, setAutoPreco] = useState(false)
+  const [margem,   setMargem]   = useState(40)
+  const [saving,   setSaving]   = useState(false)
 
-// ────────── Modal Produto ──────────
-type ModalProdutoProps = {
-  item?: EstoqueItem
-  onFechar: () => void
-  onSalvar: () => void
-}
-
-function ModalProduto({ item, onFechar, onSalvar }: ModalProdutoProps) {
-  const [nome, setNome] = useState(item?.produto_nome ?? '')
-  const [quantidade, setQuantidade] = useState(item?.quantidade ?? 0)
-  const [qtdMinima, setQtdMinima] = useState(item?.quantidade_minima ?? 5)
-  const [precoCusto, setPrecoCusto] = useState(item?.preco_custo ?? 0)
-  const [precoVenda, setPrecoVenda] = useState(item?.preco_venda ?? 0)
-  const [categoria, setCategoria] = useState(item?.categoria ?? '')
-  const [carregando, setCarregando] = useState(false)
-
-  const isEdicao = !!item
+  // Calcula venda automaticamente quando auto está ativo
+  useEffect(() => {
+    if (!autoPreco || custo <= 0) return
+    const taxa = 0.12 // ML como padrão
+    const tot  = taxa + margem / 100
+    if (tot < 1) setVenda(Number((custo / (1 - tot)).toFixed(2)))
+  }, [autoPreco, custo, margem])
 
   async function salvar() {
     if (!nome.trim()) { toast.error('Informe o nome do produto'); return }
-    setCarregando(true)
-    const body = { produto_nome: nome, quantidade, quantidade_minima: qtdMinima, preco_custo: precoCusto, preco_venda: precoVenda, categoria }
-
+    setSaving(true)
+    const body = { produto_nome: nome, quantidade: qtd, quantidade_minima: qtdMin, preco_custo: custo, preco_venda: venda, categoria: cat }
     const res = await fetch('/api/estoque', {
-      method: isEdicao ? 'PUT' : 'POST',
+      method: item ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(isEdicao ? { id: item.id, ...body } : body),
+      body: JSON.stringify(item ? { id: item.id, ...body } : body),
     })
-
-    if (res.ok) {
-      toast.success(isEdicao ? 'Produto atualizado!' : 'Produto adicionado!')
-      onSalvar()
-    } else {
-      toast.error('Erro ao salvar produto')
-    }
-    setCarregando(false)
+    if (res.ok) { toast.success(item ? 'Produto atualizado!' : 'Produto adicionado!'); onSalvar() }
+    else toast.error('Erro ao salvar produto')
+    setSaving(false)
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0d0a13] border border-white/10 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg p-6 rounded-xl shadow-2xl" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-white">{isEdicao ? 'Editar Produto' : 'Adicionar Produto'}</h2>
-          <button onClick={onFechar} className="text-zinc-500 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <p className="font-semibold" style={{ color: 'var(--text)' }}>{item ? 'Editar produto' : 'Adicionar produto'}</p>
+          <button onClick={onFechar} style={{ color: 'var(--muted)', fontSize: 18, lineHeight: 1 }}
+            className="hover:text-white transition-colors">✕</button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Nome do produto *</label>
-            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Vibrador Silicone USB"
-              className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40" />
+            <Label>Nome do produto *</Label>
+            <input value={nome} onChange={(e) => setNome(e.target.value)}
+              placeholder="Ex: Vibrador Silicone USB" style={inputStyle} />
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Quantidade</label>
-              <input type="number" value={quantidade} onChange={(e) => setQuantidade(Number(e.target.value))} min={0}
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40" />
+              <Label>Quantidade atual</Label>
+              <input type="number" value={qtd} onChange={(e) => setQtd(Number(e.target.value))} min={0} style={inputStyle} />
             </div>
             <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Quantidade mínima</label>
-              <input type="number" value={qtdMinima} onChange={(e) => setQtdMinima(Number(e.target.value))} min={1}
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40" />
+              <div className="flex items-center gap-1 mb-1">
+                <label style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500 }}>Quantidade mínima</label>
+                <span title="Você será alertado quando chegar neste nível" style={{ cursor: 'help', fontSize: 11, color: 'var(--muted2)' }}>ⓘ</span>
+              </div>
+              <input type="number" value={qtdMin} onChange={(e) => setQtdMin(Number(e.target.value))} min={1} style={inputStyle} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Preço de custo (R$)</label>
-              <input type="number" value={precoCusto} onChange={(e) => setPrecoCusto(Number(e.target.value))} step={0.01} min={0}
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40" />
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Preço de venda (R$)</label>
-              <input type="number" value={precoVenda} onChange={(e) => setPrecoVenda(Number(e.target.value))} step={0.01} min={0}
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40" />
-            </div>
-          </div>
+
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Categoria</label>
-            <input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Ex: Vibradores"
-              className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40" />
+            <Label>Categoria</Label>
+            <select value={cat} onChange={(e) => setCat(e.target.value)} style={inputStyle}>
+              <option value="">Selecione...</option>
+              {CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <Label>Preço de custo (R$)</Label>
+            <input type="number" value={custo} onChange={(e) => setCusto(Number(e.target.value))} step={0.01} min={0} style={inputStyle} />
+          </div>
+
+          {/* Toggle preço automático */}
+          <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>Calcular preço automaticamente</p>
+                <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>Usa margem sobre o custo (referência: ML 12%)</p>
+              </div>
+              <button onClick={() => setAutoPreco(!autoPreco)}
+                className="w-10 h-5 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0"
+                style={{ background: autoPreco ? 'var(--accent)' : 'rgba(255,255,255,0.1)' }}>
+                <div className="w-3.5 h-3.5 rounded-full bg-white transition-transform"
+                  style={{ transform: autoPreco ? 'translateX(18px)' : 'translateX(0)' }} />
+              </button>
+            </div>
+            {autoPreco && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>Margem desejada</span>
+                  <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>{margem}%</span>
+                </div>
+                <input type="range" min={10} max={80} value={margem} onChange={(e) => setMargem(Number(e.target.value))}
+                  className="w-full" style={{ height: 4 }} />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <Label>Preço de venda (R$)</Label>
+            <input type="number" value={venda} onChange={(e) => setVenda(Number(e.target.value))}
+              step={0.01} min={0} disabled={autoPreco} style={{ ...inputStyle, opacity: autoPreco ? 0.6 : 1 }} />
           </div>
         </div>
 
-        <div className="flex gap-3 mt-6">
-          <button onClick={onFechar} className="flex-1 py-2.5 rounded-xl border border-white/10 text-zinc-400 text-sm hover:bg-white/5 transition-all">
-            Cancelar
-          </button>
-          <button onClick={salvar} disabled={carregando}
-            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-[#c840e0] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all">
-            {carregando ? 'Salvando...' : 'Salvar'}
-          </button>
+        <div className="flex gap-2 mt-5">
+          <button onClick={onFechar} className="flex-1 py-2.5 rounded-lg text-sm transition-colors"
+            style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}>Cancelar</button>
+          <button onClick={salvar} disabled={saving}
+            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-opacity"
+            style={{ background: 'var(--accent)' }}>{saving ? 'Salvando...' : 'Salvar'}</button>
         </div>
       </div>
     </div>
   )
 }
 
-// ────────── Modal Movimentação ──────────
-type ModalMovProps = {
-  item: EstoqueItem
-  tipo: 'entrada' | 'saida'
-  onFechar: () => void
-  onSalvar: () => void
-}
-
-function ModalMovimentacao({ item, tipo, onFechar, onSalvar }: ModalMovProps) {
-  const [quantidade, setQuantidade] = useState(1)
-  const [observacao, setObservacao] = useState('')
-  const [carregando, setCarregando] = useState(false)
+// ─── Modal Movimentação ───────────────────────────────────────────
+function ModalMov({ item, tipo, onFechar, onSalvar }: { item: EstoqueItem; tipo: 'entrada' | 'saida'; onFechar: () => void; onSalvar: () => void }) {
+  const [qtd,    setQtd]    = useState(1)
+  const [obs,    setObs]    = useState('')
+  const [motivo, setMotivo] = useState('Venda')
+  const [saving, setSaving] = useState(false)
 
   async function salvar() {
-    if (quantidade <= 0) { toast.error('Informe uma quantidade válida'); return }
-    setCarregando(true)
+    if (qtd <= 0) { toast.error('Informe uma quantidade válida'); return }
+    setSaving(true)
     const res = await fetch('/api/estoque', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: item.id, tipo, quantidade, observacao }),
+      body: JSON.stringify({ id: item.id, tipo, quantidade: qtd, observacao: tipo === 'saida' ? `${motivo}: ${obs}`.trim() : obs }),
     })
     if (res.ok) {
-      toast.success(tipo === 'entrada' ? `+${quantidade} unidades adicionadas!` : `${quantidade} unidades registradas como saída!`)
+      toast.success(tipo === 'entrada' ? `+${qtd} unidades adicionadas!` : `${qtd} unidades registradas como saída!`)
       onSalvar()
     } else {
       toast.error('Erro ao registrar movimentação')
     }
-    setCarregando(false)
+    setSaving(false)
   }
 
+  const isEntrada = tipo === 'entrada'
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0d0a13] border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-white">
-            {tipo === 'entrada' ? '+ Entrada' : '- Saída'} de Estoque
-          </h2>
-          <button onClick={onFechar} className="text-zinc-500 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm p-6 rounded-xl shadow-2xl" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-semibold" style={{ color: 'var(--text)' }}>
+            {isEntrada ? '+ Entrada' : '− Saída'} de estoque
+          </p>
+          <button onClick={onFechar} style={{ color: 'var(--muted)', fontSize: 18, lineHeight: 1 }}>✕</button>
         </div>
-        <p className="text-sm text-white font-medium mb-4">{item.produto_nome}</p>
+
+        <p className="text-sm mb-4 px-3 py-2 rounded-lg" style={{ color: 'var(--muted)', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
+          {item.produto_nome}
+        </p>
+
         <div className="space-y-3">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Quantidade</label>
-            <input type="number" value={quantidade} onChange={(e) => setQuantidade(Number(e.target.value))} min={1}
-              className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40" />
+            <Label>Quantidade</Label>
+            <input type="number" value={qtd} onChange={(e) => setQtd(Number(e.target.value))} min={1} style={inputStyle} />
           </div>
+          {!isEntrada && (
+            <div>
+              <Label>Motivo</Label>
+              <select value={motivo} onChange={(e) => setMotivo(e.target.value)} style={inputStyle}>
+                {MOTIVOS_SAIDA.map((m) => <option key={m}>{m}</option>)}
+              </select>
+            </div>
+          )}
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Observação (opcional)</label>
-            <input value={observacao} onChange={(e) => setObservacao(e.target.value)} placeholder="Ex: Compra fornecedor X"
-              className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40" />
+            <Label>Observação (opcional)</Label>
+            <input value={obs} onChange={(e) => setObs(e.target.value)}
+              placeholder={isEntrada ? 'Ex: Compra fornecedor X' : 'Detalhes adicionais'}
+              style={inputStyle} />
           </div>
         </div>
-        <div className="flex gap-3 mt-5">
-          <button onClick={onFechar} className="flex-1 py-2.5 rounded-xl border border-white/10 text-zinc-400 text-sm hover:bg-white/5 transition-all">
-            Cancelar
-          </button>
-          <button onClick={salvar} disabled={carregando}
-            className={`flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 transition-all ${tipo === 'entrada' ? 'bg-green-600 hover:bg-green-500' : 'bg-red-600 hover:bg-red-500'}`}>
-            {carregando ? 'Salvando...' : 'Confirmar'}
+
+        <div className="flex gap-2 mt-5">
+          <button onClick={onFechar} className="flex-1 py-2.5 rounded-lg text-sm"
+            style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}>Cancelar</button>
+          <button onClick={salvar} disabled={saving}
+            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: isEntrada ? 'var(--green)' : 'var(--red)' }}>
+            {saving ? 'Salvando...' : 'Confirmar'}
           </button>
         </div>
       </div>
@@ -200,68 +229,66 @@ function ModalMovimentacao({ item, tipo, onFechar, onSalvar }: ModalMovProps) {
   )
 }
 
-// ────────── Página principal ──────────
+// ─── Página principal ─────────────────────────────────────────────
 export default function EstoquePage() {
-  const [itens, setItens] = useState<EstoqueItem[]>([])
-  const [carregando, setCarregando] = useState(true)
-  const [modalAdicionar, setModalAdicionar] = useState(false)
-  const [itemEditar, setItemEditar] = useState<EstoqueItem | null>(null)
-  const [movimentacao, setMovimentacao] = useState<{ item: EstoqueItem; tipo: 'entrada' | 'saida' } | null>(null)
+  const [itens,     setItens]     = useState<EstoqueItem[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [modal,     setModal]     = useState<'add' | 'edit' | null>(null)
+  const [itemEdit,  setItemEdit]  = useState<EstoqueItem | null>(null)
+  const [mov,       setMov]       = useState<{ item: EstoqueItem; tipo: 'entrada' | 'saida' } | null>(null)
 
   const buscar = useCallback(async () => {
-    setCarregando(true)
+    setLoading(true)
     const res = await fetch('/api/estoque')
     if (res.ok) setItens(await res.json())
-    setCarregando(false)
+    setLoading(false)
   }, [])
 
   useEffect(() => { buscar() }, [buscar])
 
   async function remover(id: string) {
     if (!confirm('Remover este produto do estoque?')) return
-    const res = await fetch('/api/estoque', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
+    const res = await fetch('/api/estoque', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     if (res.ok) { toast.success('Produto removido'); buscar() }
-    else toast.error('Erro ao remover produto')
+    else toast.error('Erro ao remover')
   }
 
   function exportarCSV() {
-    const cabecalho = ['Produto', 'Quantidade', 'Qtd Mínima', 'Preço Custo', 'Preço Venda', 'Margem', 'Categoria', 'Status']
-    const linhas = itens.map((i) => [
+    const cab  = ['Produto', 'Qtd', 'Qtd mínima', 'Custo', 'Venda', 'Lucro unit.', 'Categoria', 'Status']
+    const rows = itens.map((i) => [
       i.produto_nome, i.quantidade, i.quantidade_minima,
-      i.preco_custo, i.preco_venda,
-      `${margem(i).toFixed(1)}%`, i.categoria,
-      statusConfig[statusItem(i)].label.replace(/[🟢🟡🔴] /g, ''),
+      i.preco_custo, i.preco_venda, (i.preco_venda - i.preco_custo).toFixed(2),
+      i.categoria, statusItem(i),
     ])
-    const csv = [cabecalho, ...linhas].map((r) => r.join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = 'estoque.csv'; a.click()
+    const csv = [cab, ...rows].map((r) => r.join(',')).join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+    const a = document.createElement('a'); a.href = url; a.download = 'estoque.csv'; a.click()
     URL.revokeObjectURL(url)
   }
 
   const totalProdutos = itens.length
-  const baixos = itens.filter((i) => statusItem(i) !== 'ok').length
-  const valorTotal = itens.reduce((acc, i) => acc + (i.preco_custo ?? 0) * i.quantidade, 0)
+  const baixos    = itens.filter((i) => statusItem(i) !== 'ok').length
+  const valorTotal = itens.reduce((a, i) => a + (i.preco_custo ?? 0) * i.quantidade, 0)
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">Gestão de Estoque</h1>
-          <p className="text-zinc-400 text-sm mt-0.5">Controle suas entradas e saídas em tempo real</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>Gestão de Estoque</h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>Controle suas entradas e saídas em tempo real</p>
         </div>
         <div className="flex gap-2">
           <button onClick={exportarCSV}
-            className="px-4 py-2 rounded-xl border border-white/10 text-zinc-400 text-sm hover:bg-white/5 hover:text-white transition-all">
+            className="px-4 py-2 rounded-lg text-sm transition-colors"
+            style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--border-hover)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}>
             Exportar CSV
           </button>
-          <button onClick={() => setModalAdicionar(true)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-[#c840e0] text-white text-sm font-semibold hover:opacity-90 transition-all">
+          <button onClick={() => setModal('add')}
+            className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+            style={{ background: 'var(--accent)' }}>
             + Adicionar produto
           </button>
         </div>
@@ -270,84 +297,102 @@ export default function EstoquePage() {
       {/* Resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Total de produtos', valor: totalProdutos.toString(), emoji: '📦' },
-          { label: 'Estoque baixo/zerado', valor: baixos.toString(), emoji: '⚠️', alerta: baixos > 0 },
-          { label: 'Valor total em estoque', valor: fmt(valorTotal, 'moeda'), emoji: '💰' },
+          { label: 'Total de produtos',     valor: totalProdutos.toString(), alerta: false },
+          { label: 'Estoque baixo / zerado', valor: baixos.toString(),        alerta: baixos > 0 },
+          { label: 'Valor total em estoque', valor: fmt(valorTotal),          alerta: false },
         ].map((c) => (
-          <div key={c.label} className={`rounded-2xl border p-5 ${c.alerta ? 'bg-red-500/10 border-red-500/20' : 'bg-white/[0.03] border-white/10'}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-zinc-400">{c.label}</p>
-                <p className={`text-2xl font-bold mt-1 ${c.alerta ? 'text-red-400' : 'text-white'}`}>{c.valor}</p>
-              </div>
-              <span className="text-2xl">{c.emoji}</span>
-            </div>
+          <div key={c.label} className="p-5 rounded-xl" style={{
+            background: c.alerta ? 'var(--red-soft)' : 'var(--card)',
+            border: `1px solid ${c.alerta ? 'rgba(239,68,68,0.2)' : 'var(--border)'}`,
+          }}>
+            <p style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500 }}>{c.label}</p>
+            <p className="mt-2 font-bold" style={{ fontSize: 24, color: c.alerta ? 'var(--red)' : 'var(--text)' }}>{c.valor}</p>
           </div>
         ))}
       </div>
 
       {/* Tabela */}
-      <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5">
-          <h2 className="text-base font-semibold text-white">Produtos em estoque</h2>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+        <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+          <p className="font-semibold" style={{ color: 'var(--text)' }}>Produtos em estoque</p>
         </div>
 
-        {carregando ? (
-          <div className="py-16 text-center text-zinc-500 text-sm">Carregando...</div>
+        {loading ? (
+          <div className="py-20 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>Carregando...</div>
         ) : itens.length === 0 ? (
-          <div className="py-16 text-center">
-            <p className="text-3xl mb-3">📦</p>
-            <p className="text-zinc-400 text-sm">Nenhum produto cadastrado ainda.</p>
-            <button onClick={() => setModalAdicionar(true)}
-              className="mt-4 px-4 py-2 rounded-xl bg-[#c840e0]/15 border border-[#c840e0]/25 text-[#c840e0] text-sm hover:bg-[#c840e0]/25 transition-all">
+          <div className="py-20 text-center">
+            <p className="text-4xl mb-3">📦</p>
+            <p style={{ color: 'var(--muted)', fontSize: 14 }}>Nenhum produto cadastrado ainda.</p>
+            <button onClick={() => setModal('add')} className="mt-4 px-4 py-2 rounded-lg text-sm font-medium"
+              style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid rgba(124,92,252,0.2)' }}>
               Adicionar primeiro produto
             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full" style={{ fontSize: 13 }}>
               <thead>
-                <tr className="border-b border-white/5">
-                  {['Produto', 'Qtd atual', 'Qtd mínima', 'Preço custo', 'Preço venda', 'Margem', 'Status', 'Ações'].map((col) => (
-                    <th key={col} className="text-left text-xs text-zinc-500 font-medium px-5 py-3">{col}</th>
+                <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)' }}>
+                  {['Produto', 'Qtd atual', 'Qtd mínima', 'Custo', 'Venda', 'Lucro unit.', 'Status', 'Ações'].map((col) => (
+                    <th key={col} className="text-left px-5 py-3"
+                      style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500 }}>{col}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody>
                 {itens.map((item) => {
-                  const st = statusItem(item)
-                  const cfg = statusConfig[st]
+                  const st   = statusItem(item)
+                  const lucro = (item.preco_venda ?? 0) - (item.preco_custo ?? 0)
                   return (
-                    <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="px-5 py-4 text-white font-medium">{item.produto_nome}</td>
-                      <td className={`px-5 py-4 font-semibold ${st === 'zerado' ? 'text-red-400' : st === 'baixo' ? 'text-yellow-400' : 'text-white'}`}>
-                        {item.quantidade}
+                    <tr key={item.id} style={{ borderTop: '1px solid var(--border)' }}>
+                      <td className="px-5 py-3">
+                        <button onClick={() => { setItemEdit(item); setModal('edit') }}
+                          className="font-medium text-left hover:underline transition-colors"
+                          style={{ color: 'var(--text)' }}>
+                          {item.produto_nome}
+                        </button>
+                        {item.categoria && (
+                          <p style={{ fontSize: 11, color: 'var(--muted2)', marginTop: 1 }}>{item.categoria}</p>
+                        )}
                       </td>
-                      <td className="px-5 py-4 text-zinc-400">{item.quantidade_minima}</td>
-                      <td className="px-5 py-4 text-zinc-300">{item.preco_custo ? fmt(item.preco_custo, 'moeda') : '—'}</td>
-                      <td className="px-5 py-4 text-zinc-300">{item.preco_venda ? fmt(item.preco_venda, 'moeda') : '—'}</td>
-                      <td className="px-5 py-4 text-zinc-300">{item.preco_custo && item.preco_venda ? fmt(margem(item), 'pct') : '—'}</td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-full border ${cfg.cor}`}>
-                          {cfg.label}
+                      <td className="px-5 py-3 font-semibold" style={{
+                        color: st === 'zerado' ? 'var(--red)' : st === 'baixo' ? 'var(--gold)' : 'var(--text)',
+                      }}>{item.quantidade}</td>
+                      <td className="px-5 py-3" style={{ color: 'var(--muted)' }}>{item.quantidade_minima}</td>
+                      <td className="px-5 py-3" style={{ color: 'var(--muted)' }}>{item.preco_custo ? fmt(item.preco_custo) : '—'}</td>
+                      <td className="px-5 py-3" style={{ color: 'var(--text)' }}>{item.preco_venda ? fmt(item.preco_venda) : '—'}</td>
+                      <td className="px-5 py-3 font-medium" style={{ color: lucro > 0 ? 'var(--green)' : 'var(--muted)' }}>
+                        {lucro > 0 ? fmt(lucro) : '—'}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="px-2 py-0.5 rounded-md text-xs font-medium" style={STATUS_STYLE[st]}>
+                          {STATUS_LABEL[st]}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3">
                         <div className="flex items-center gap-1.5">
-                          <button onClick={() => setMovimentacao({ item, tipo: 'entrada' })}
-                            className="px-2.5 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-xs hover:bg-green-500/20 transition-all">
+                          <button onClick={() => setMov({ item, tipo: 'entrada' })}
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            style={{ background: 'var(--green-soft)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.2)' }}>
                             + Entrada
                           </button>
-                          <button onClick={() => setMovimentacao({ item, tipo: 'saida' })}
-                            className="px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs hover:bg-red-500/20 transition-all">
-                            - Saída
+                          <button onClick={() => setMov({ item, tipo: 'saida' })}
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            style={{ background: 'var(--red-soft)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                            − Saída
                           </button>
-                          <button onClick={() => setItemEditar(item)}
-                            className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-all" title="Editar">
+                          <button onClick={() => { setItemEdit(item); setModal('edit') }}
+                            className="p-1.5 rounded-lg transition-colors" title="Editar"
+                            style={{ color: 'var(--muted)' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted)')}>
                             ✏️
                           </button>
                           <button onClick={() => remover(item.id)}
-                            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Remover">
+                            className="p-1.5 rounded-lg transition-colors" title="Remover"
+                            style={{ color: 'var(--muted)' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--red)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted)')}>
                             🗑️
                           </button>
                         </div>
@@ -362,20 +407,17 @@ export default function EstoquePage() {
       </div>
 
       {/* Modais */}
-      {(modalAdicionar || itemEditar) && (
+      {modal && (
         <ModalProduto
-          item={itemEditar ?? undefined}
-          onFechar={() => { setModalAdicionar(false); setItemEditar(null) }}
-          onSalvar={() => { setModalAdicionar(false); setItemEditar(null); buscar() }}
+          item={modal === 'edit' ? (itemEdit ?? undefined) : undefined}
+          onFechar={() => { setModal(null); setItemEdit(null) }}
+          onSalvar={() => { setModal(null); setItemEdit(null); buscar() }}
         />
       )}
-      {movimentacao && (
-        <ModalMovimentacao
-          item={movimentacao.item}
-          tipo={movimentacao.tipo}
-          onFechar={() => setMovimentacao(null)}
-          onSalvar={() => { setMovimentacao(null); buscar() }}
-        />
+      {mov && (
+        <ModalMov item={mov.item} tipo={mov.tipo}
+          onFechar={() => setMov(null)}
+          onSalvar={() => { setMov(null); buscar() }} />
       )}
     </>
   )
