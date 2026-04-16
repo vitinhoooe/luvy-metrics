@@ -4,142 +4,193 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]     = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [sent, setSent]       = useState(false)
+  const [error, setError]     = useState('')
 
-  async function handleLogin(e: React.FormEvent) {
+  async function enviar(e: React.FormEvent) {
     e.preventDefault()
+    if (!email.trim()) return
     setLoading(true)
-    setError(null)
-
+    setError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error: err } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { emailRedirectTo: `${location.origin}/auth/callback` },
     })
-
-    if (error) {
-      setError(error.message)
-    } else {
-      setSent(true)
-    }
-
     setLoading(false)
+    if (err) setError(err.message)
+    else setSent(true)
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
-      {/* Ambient glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-[100px]" />
-      </div>
+    <>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+      <div style={{
+        minHeight: '100vh',
+        background: '#08060d',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        padding: '24px',
+      }}>
+        <div style={{ width: '100%', maxWidth: 420 }}>
 
-      <div className="relative w-full max-w-md">
-        {/* Logo / Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 mb-4 shadow-lg shadow-purple-500/25">
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Luvy <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Metrics</span>
-          </h1>
-          <p className="text-zinc-400 text-sm mt-1">Acompanhe suas métricas em tempo real</p>
-        </div>
-
-        {/* Card */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm shadow-2xl">
-          {sent ? (
-            <div className="text-center py-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-500/10 border border-purple-500/20 mb-4">
-                <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-semibold text-white mb-2">Link enviado!</h2>
-              <p className="text-zinc-400 text-sm">
-                Verifique sua caixa de entrada em{' '}
-                <span className="text-purple-400 font-medium">{email}</span>{' '}
-                e clique no link para acessar.
-              </p>
-              <button
-                onClick={() => { setSent(false); setEmail('') }}
-                className="mt-6 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
-              >
-                Usar outro email
-              </button>
+          {/* Logo */}
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              background: 'linear-gradient(135deg, #c840e0, #9333ea)',
+              marginBottom: 16,
+              fontSize: 26,
+            }}>
+              📊
             </div>
-          ) : (
-            <>
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-white">Entrar</h2>
-                <p className="text-zinc-400 text-sm mt-1">
-                  Enviaremos um link mágico para seu email
+            <h1 style={{ color: '#f5f0ff', fontSize: 24, fontWeight: 700, margin: 0 }}>
+              LuvyMetrics
+            </h1>
+            <p style={{ color: '#9d8faa', fontSize: 14, marginTop: 6 }}>
+              Inteligência para seu sex shop
+            </p>
+          </div>
+
+          {/* Card */}
+          <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(200,64,224,0.15)',
+            borderRadius: 16,
+            padding: 32,
+          }}>
+            {sent ? (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
+                <h2 style={{ color: '#f5f0ff', fontSize: 20, fontWeight: 600, marginBottom: 8 }}>
+                  Verifique seu e-mail
+                </h2>
+                <p style={{ color: '#9d8faa', fontSize: 14, lineHeight: 1.6 }}>
+                  Enviamos um link de acesso para<br />
+                  <span style={{ color: '#c840e0', fontWeight: 600 }}>{email}</span>
                 </p>
-              </div>
-
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu@email.com"
-                    required
-                    disabled={loading}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500
-                      focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50
-                      disabled:opacity-50 transition-all"
-                  />
-                </div>
-
-                {error && (
-                  <p className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-2">
-                    {error}
-                  </p>
-                )}
-
+                <p style={{ color: '#6d6079', fontSize: 12, marginTop: 16 }}>
+                  Não recebeu? Verifique sua caixa de spam.
+                </p>
                 <button
-                  type="submit"
-                  disabled={loading || !email}
-                  className="w-full py-3 px-4 rounded-xl font-semibold text-white text-sm
-                    bg-gradient-to-r from-purple-600 to-pink-600
-                    hover:from-purple-500 hover:to-pink-500
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    focus:outline-none focus:ring-2 focus:ring-purple-500/50
-                    transition-all duration-200 shadow-lg shadow-purple-500/25"
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Enviando...
-                    </span>
-                  ) : (
-                    'Entrar com link mágico'
-                  )}
+                  onClick={() => { setSent(false); setEmail('') }}
+                  style={{
+                    marginTop: 24,
+                    background: 'transparent',
+                    border: '1px solid rgba(200,64,224,0.25)',
+                    borderRadius: 8,
+                    color: '#9d8faa',
+                    fontSize: 13,
+                    padding: '8px 20px',
+                    cursor: 'pointer',
+                  }}>
+                  Usar outro e-mail
                 </button>
-              </form>
-            </>
-          )}
-        </div>
+              </div>
+            ) : (
+              <>
+                <h2 style={{ color: '#f5f0ff', fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
+                  Entrar na plataforma
+                </h2>
+                <p style={{ color: '#9d8faa', fontSize: 13, marginBottom: 24 }}>
+                  Enviaremos um link mágico para seu e-mail
+                </p>
 
-        <p className="text-center text-zinc-600 text-xs mt-6">
-          Sem senha. Sem complicação.
-        </p>
+                <form onSubmit={enviar}>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: 11,
+                      color: '#9d8faa',
+                      fontWeight: 500,
+                      letterSpacing: '0.4px',
+                      marginBottom: 6,
+                    }}>
+                      E-MAIL
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="seu@email.com"
+                      required
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(200,64,224,0.2)',
+                        borderRadius: 8,
+                        padding: '11px 14px',
+                        color: '#f5f0ff',
+                        fontSize: 14,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = '#c840e0')}
+                      onBlur={(e)  => (e.target.style.borderColor = 'rgba(200,64,224,0.2)')}
+                    />
+                  </div>
+
+                  {error && (
+                    <p style={{
+                      color: '#ef4444',
+                      fontSize: 12,
+                      marginBottom: 12,
+                      background: 'rgba(239,68,68,0.08)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      borderRadius: 6,
+                      padding: '8px 12px',
+                    }}>
+                      {error}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading || !email.trim()}
+                    style={{
+                      width: '100%',
+                      background: loading ? 'rgba(200,64,224,0.5)' : '#c840e0',
+                      border: 'none',
+                      borderRadius: 8,
+                      color: '#fff',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      padding: '12px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      transition: 'opacity 0.2s',
+                    }}>
+                    {loading ? 'Enviando...' : 'Enviar link de acesso'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+
+          {/* Rodapé */}
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#6d6079', marginTop: 24 }}>
+            Ainda não tem acesso?{' '}
+            <a
+              href="https://pay.cakto.com.br/wi3b98b_851240"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#c840e0', textDecoration: 'none' }}>
+              Assinar agora →
+            </a>
+          </p>
+        </div>
       </div>
-    </main>
+    </>
   )
 }
