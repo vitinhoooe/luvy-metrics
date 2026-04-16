@@ -4,36 +4,19 @@ export const runtime = 'nodejs'
 export const maxDuration = 30
 
 export async function POST(req: Request) {
-  console.log('=== BOT CHAMADO ===')
-
   try {
     const body = await req.json()
-    const messages = body.messages || []
-    console.log('Mensagens:', messages.length)
-    console.log('API Key existe:', !!process.env.ANTHROPIC_API_KEY)
-    console.log('API Key início:', process.env.ANTHROPIC_API_KEY?.substring(0, 15))
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    // Pega só a última mensagem do usuário
+    const mensagens = body.messages || []
+    const ultimaMensagem = mensagens
+      .filter((m: any) => m.role === 'user')
+      .pop()
+
+    if (!ultimaMensagem) {
       return NextResponse.json({
         role: 'assistant',
-        content: 'Erro: ANTHROPIC_API_KEY não configurada.'
-      })
-    }
-
-    const mensagensValidas = messages
-      .filter((m: any) => m.role === 'user' || m.role === 'assistant')
-      .filter((m: any) => m.content && m.content.trim() !== '')
-
-    // Garante que começa com mensagem do usuário
-    const primeiroUser = mensagensValidas.findIndex((m: any) => m.role === 'user')
-    const mensagensFiltradas = primeiroUser >= 0
-      ? mensagensValidas.slice(primeiroUser)
-      : mensagensValidas
-
-    if (mensagensFiltradas.length === 0) {
-      return NextResponse.json({
-        role: 'assistant',
-        content: 'Por favor, faça uma pergunta.'
+        content: 'Não entendi. Pode repetir sua pergunta?'
       })
     }
 
@@ -48,27 +31,23 @@ export async function POST(req: Request) {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 300,
         system: 'Você é assistente especialista em sex shop no Brasil. Responda em português. Máximo 100 palavras. Seja direto e prático.',
-        messages: mensagensFiltradas.map((m: any) => ({
-          role: m.role,
-          content: String(m.content)
-        }))
+        messages: [
+          { role: 'user', content: ultimaMensagem.content }
+        ]
       })
     })
 
-    console.log('Status Anthropic:', response.status)
-
     if (!response.ok) {
       const erro = await response.text()
-      console.error('Erro Anthropic:', erro)
+      console.error('Erro Anthropic:', response.status, erro)
       return NextResponse.json({
         role: 'assistant',
-        content: 'Erro na API: ' + response.status
+        content: 'Erro temporário. Tente novamente em instantes.'
       })
     }
 
     const data = await response.json()
-    const texto = data.content?.[0]?.text || 'Sem resposta'
-    console.log('Resposta OK:', texto.substring(0, 50))
+    const texto = data.content?.[0]?.text || 'Sem resposta.'
 
     return NextResponse.json({
       role: 'assistant',
@@ -76,10 +55,10 @@ export async function POST(req: Request) {
     })
 
   } catch (error: any) {
-    console.error('ERRO GERAL:', error.message)
+    console.error('Erro geral:', error)
     return NextResponse.json({
       role: 'assistant',
-      content: 'Erro interno: ' + error.message
+      content: 'Erro interno. Tente novamente.'
     })
   }
 }
