@@ -172,7 +172,7 @@ export default function TendenciasPage() {
                         <tr key={i} style={{ borderBottom: `1px solid ${BD}` }}>
                           <td style={{ padding: '12px 16px' }}>
                             {p.url_produto ? (
-                              <a href={p.url_produto} target="_blank" rel="noopener noreferrer" style={{ color: AC, textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>{p.produto_nome} ↗</a>
+                              <a href={p.url_produto} target="_blank" rel="noopener noreferrer" style={{ color: '#7c3aed', textDecoration: 'none', fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center', gap: 4 }} onMouseEnter={e => (e.target as HTMLElement).style.textDecoration = 'underline'} onMouseLeave={e => (e.target as HTMLElement).style.textDecoration = 'none'}>{p.produto_nome} <span style={{ fontSize: 11, opacity: 0.6 }}>↗</span></a>
                             ) : <span style={{ fontSize: 14, fontWeight: 500, color: TX }}>{p.produto_nome}</span>}
                             {p.categoria && <div style={{ fontSize: 11, color: MT, marginTop: 2 }}>{p.categoria}</div>}
                           </td>
