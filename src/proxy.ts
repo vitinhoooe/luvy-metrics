@@ -34,8 +34,12 @@ export async function proxy(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/auth')
 
-  // Redireciona para login se não autenticado
-  if (!user && !isAuthRoute) {
+  const isApiRoute =
+    request.nextUrl.pathname.startsWith('/api/cron') ||
+    request.nextUrl.pathname.startsWith('/api/webhook')
+
+  // Redireciona para login se não autenticado (exceto API pública)
+  if (!user && !isAuthRoute && !isApiRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
