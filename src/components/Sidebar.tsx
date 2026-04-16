@@ -14,7 +14,6 @@ const navItems = [
   { href: '/estoque', icon: '📦', label: 'Estoque' },
   { href: '/calculadora', icon: '💰', label: 'Calculadora' },
   { href: '/regioes', icon: '🗺️', label: 'Regiões' },
-  { href: '/bot', icon: '🤖', label: 'Bot IA' },
   { href: '/configuracoes', icon: '⚙️', label: 'Configurações' },
 ]
 
