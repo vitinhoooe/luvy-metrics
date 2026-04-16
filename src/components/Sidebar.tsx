@@ -33,14 +33,15 @@ export default function Sidebar({ user, perfil }: any) {
       fontFamily: "'Plus Jakarta Sans', sans-serif",
     }}>
       <div style={{ padding: '24px 20px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
-            width: 34, height: 34, background: 'linear-gradient(135deg,#7c3aed,#6d28d9)',
-            borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, fontWeight: 900, color: '#fff',
+            width: 32, height: 32, background: 'linear-gradient(135deg,#7c3aed,#9333ea)',
+            borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 900, color: '#fff', fontSize: 16,
           }}>L</div>
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
-            Luvy<span style={{ color: '#a78bfa' }}>Metrics</span>
+          <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px' }}>
+            <span style={{ color: '#ffffff' }}>Luvy</span>
+            <span style={{ color: '#a78bfa' }}>Metrics</span>
           </span>
         </div>
       </div>

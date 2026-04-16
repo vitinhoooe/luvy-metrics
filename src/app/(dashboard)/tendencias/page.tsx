@@ -79,23 +79,6 @@ export default function TendenciasPage() {
     return mBusca && mFonte && mCat
   })
 
-  // Comparador: agrupa produtos similares por nome de diferentes fontes
-  const comparados = (() => {
-    if (!buscaComp.trim()) return []
-    const termo = buscaComp.toLowerCase()
-    const matches = produtos.filter(p => p.produto_nome.toLowerCase().includes(termo))
-    // Group by normalized name
-    const groups: Record<string, { ml?: ProdutoTendencia; shopee?: ProdutoTendencia; outros?: ProdutoTendencia }> = {}
-    for (const p of matches) {
-      const key = p.produto_nome.toLowerCase().slice(0, 30)
-      if (!groups[key]) groups[key] = {}
-      if (p.fonte === 'Mercado Livre') groups[key].ml = p
-      else if (p.fonte === 'Shopee') groups[key].shopee = p
-      else groups[key].outros = p
-    }
-    return Object.entries(groups).map(([, g]) => g)
-  })()
-
   const explosao = filtrados[0]
 
   return (
@@ -214,63 +197,112 @@ export default function TendenciasPage() {
 
       ) : aba === 'comparador' ? (
         <>
-          <div style={{ marginBottom: 24 }}>
-            <input value={buscaComp} onChange={e => setBuscaComp(e.target.value)} placeholder="Digite um produto para comparar preços..." style={{ ...INP, width: '100%', maxWidth: 500 }} />
-          </div>
+          <p style={{ fontSize: 14, color: MT, marginBottom: 16 }}>Compare preços e volumes de venda entre marketplaces. Dados atualizados diariamente.</p>
 
-          {!buscaComp.trim() ? (
-            <div style={{ padding: 80, textAlign: 'center' }}>
-              <p style={{ fontSize: 40, marginBottom: 12 }}>📊</p>
-              <p style={{ color: MT, fontSize: 15 }}>Digite o nome de um produto para comparar preços entre marketplaces.</p>
-            </div>
-          ) : comparados.length === 0 ? (
-            <div style={{ padding: 60, textAlign: 'center' }}>
-              <p style={{ fontSize: 32, marginBottom: 12 }}>🔍</p>
-              <p style={{ color: MT }}>Nenhum produto encontrado para &quot;{buscaComp}&quot;.</p>
-            </div>
-          ) : (
-            <div style={{ ...CARD, overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f9fafb' }}>
-                    {['Produto', 'Mercado Livre', 'Shopee', 'Diferença', 'Mais vendas', 'Margem est.'].map(c => (
-                      <th key={c} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: MT, borderBottom: `1px solid ${BD}` }}>{c}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparados.map((g, i) => {
-                    const nome = g.ml?.produto_nome || g.shopee?.produto_nome || g.outros?.produto_nome || ''
-                    const mlPreco = g.ml?.preco_medio || 0
-                    const shPreco = g.shopee?.preco_medio || 0
-                    const diff = mlPreco && shPreco ? (((shPreco - mlPreco) / mlPreco) * 100).toFixed(0) : null
-                    const menorML = mlPreco && shPreco ? mlPreco <= shPreco : false
-                    const maisVendas = (g.ml?.vendas_hoje || 0) >= (g.shopee?.vendas_hoje || 0) ? 'ML' : 'Shopee'
-                    const custoEst = Math.min(mlPreco || 999, shPreco || 999) * 0.4
-                    const vendaEst = Math.max(mlPreco || 0, shPreco || 0)
-                    const margem = vendaEst > 0 ? (((vendaEst - custoEst) / vendaEst) * 100).toFixed(0) : '—'
-                    return (
-                      <tr key={i} style={{ borderBottom: `1px solid ${BD}` }}>
-                        <td style={{ padding: '12px 16px', fontWeight: 500, color: TX, fontSize: 14 }}>{nome.slice(0, 50)}</td>
-                        <td style={{ padding: '12px 16px', fontSize: 14, color: menorML ? GR : TX, fontWeight: menorML ? 600 : 400 }}>{mlPreco ? fmt(mlPreco) : '—'}</td>
-                        <td style={{ padding: '12px 16px', fontSize: 14, color: !menorML && shPreco ? GR : TX, fontWeight: !menorML && shPreco ? 600 : 400 }}>
-                          {shPreco ? fmt(shPreco) : <span style={{ color: MT, fontSize: 12 }}>Em coleta</span>}
-                        </td>
-                        <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: diff && Number(diff) < 0 ? GR : '#dc2626' }}>{diff ? `${diff}%` : '—'}</td>
-                        <td style={{ padding: '12px 16px' }}><span style={{ background: maisVendas === 'ML' ? '#fef3c7' : '#ffedd5', color: maisVendas === 'ML' ? '#d97706' : '#ea580c', padding: '3px 8px', borderRadius: 100, fontSize: 11, fontWeight: 600 }}>{maisVendas}</span></td>
-                        <td style={{ padding: '12px 16px', fontSize: 14, color: GR, fontWeight: 600 }}>{margem}%</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-              {!produtos.some(p => p.fonte === 'Shopee') && (
-                <div style={{ padding: '16px 24px', background: '#fffbeb', borderTop: `1px solid ${BD}`, fontSize: 13, color: '#d97706' }}>
-                  Dados da Shopee em coleta — disponível em breve. Clique em &quot;Atualizar dados&quot; na aba Tendências.
-                </div>
-              )}
-            </div>
-          )}
+          <input value={buscaComp} onChange={e => setBuscaComp(e.target.value)} placeholder="Digite um produto para comparar preços entre marketplaces..."
+            style={{ ...INP, width: '100%', maxWidth: 520, marginBottom: 24 }} />
+
+          {/* Stats cards */}
+          {(() => {
+            const allProds = buscaComp.trim() ? produtos.filter(p => p.produto_nome.toLowerCase().includes(buscaComp.toLowerCase()) || p.categoria?.toLowerCase().includes(buscaComp.toLowerCase())) : produtos
+            const mlCount = allProds.filter(p => p.fonte === 'Mercado Livre').length
+            const shCount = allProds.filter(p => p.fonte === 'Shopee').length
+            const topMargem = allProds.reduce((best, p) => (p.preco_medio * 0.35) > (best?.preco_medio ?? 0) * 0.35 ? p : best, allProds[0])
+            const topCresc = allProds.reduce((best, p) => (p.crescimento_pct ?? 0) > (best?.crescimento_pct ?? 0) ? p : best, allProds[0])
+            const topMarketplace = mlCount >= shCount ? `ML (${mlCount})` : `Shopee (${shCount})`
+
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
+                {[
+                  { label: 'Produtos monitorados', valor: String(allProds.length), cor: AC },
+                  { label: 'Mais produtos em', valor: topMarketplace, cor: '#d97706' },
+                  { label: 'Maior margem est.', valor: topMargem ? topMargem.produto_nome.slice(0, 20) : '—', cor: GR },
+                  { label: 'Maior crescimento', valor: topCresc ? `+${topCresc.crescimento_pct?.toFixed(0)}%` : '—', cor: '#dc2626' },
+                ].map((c, i) => (
+                  <div key={i} style={{ ...CARD, padding: 20 }}>
+                    <div style={{ fontSize: 11, color: MT, fontWeight: 500, marginBottom: 8 }}>{c.label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: c.cor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.valor}</div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+
+          {(() => {
+            const termo = buscaComp.toLowerCase().trim()
+            const matches = termo ? produtos.filter(p =>
+              p.produto_nome.toLowerCase().includes(termo) ||
+              p.categoria?.toLowerCase().includes(termo) ||
+              p.fonte?.toLowerCase().includes(termo)
+            ) : produtos.slice(0, 30)
+
+            if (matches.length === 0) return (
+              <div style={{ padding: 60, textAlign: 'center' }}>
+                <p style={{ fontSize: 32, marginBottom: 12 }}>🔍</p>
+                <p style={{ color: MT, marginBottom: 8 }}>Nenhum produto encontrado para &quot;{buscaComp}&quot;.</p>
+                <p style={{ color: MT, fontSize: 13 }}>Clique em &quot;Atualizar dados&quot; na aba Tendências para buscar mais produtos.</p>
+              </div>
+            )
+
+            return (
+              <div style={{ ...CARD, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: '#f9fafb' }}>
+                      {['Produto', 'Categoria', 'Fonte', 'Preço', 'Vendas/dia', 'Margem est.', 'Tendência'].map(c => (
+                        <th key={c} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: MT, borderBottom: `1px solid ${BD}` }}>{c}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matches.map((p, i) => {
+                      const pct = p.crescimento_pct || 0
+                      const margemEst = p.preco_medio > 0 ? fmt(p.preco_medio * 0.35) : '—'
+                      const isMelhorPreco = !matches.some(o => o.produto_nome === p.produto_nome && o.fonte !== p.fonte && o.preco_medio < p.preco_medio && o.preco_medio > 0)
+                      const isMaisVendas = !matches.some(o => o.produto_nome === p.produto_nome && o.fonte !== p.fonte && o.vendas_hoje > p.vendas_hoje)
+                      const fonteBadge = p.fonte === 'Mercado Livre'
+                        ? { bg: '#fef9c3', color: '#854d0e' }
+                        : p.fonte === 'Shopee'
+                          ? { bg: '#fff7ed', color: '#c2410c' }
+                          : { bg: '#dbeafe', color: '#1d4ed8' }
+                      return (
+                        <tr key={i} style={{ borderBottom: `1px solid ${BD}` }}>
+                          <td style={{ padding: '12px 14px', maxWidth: 220 }}>
+                            {p.url_produto ? (
+                              <a href={p.url_produto} target="_blank" rel="noopener noreferrer" style={{ color: AC, textDecoration: 'none', fontSize: 13, fontWeight: 500 }}>{p.produto_nome.slice(0, 45)} ↗</a>
+                            ) : <span style={{ fontSize: 13, fontWeight: 500, color: TX }}>{p.produto_nome.slice(0, 45)}</span>}
+                          </td>
+                          <td style={{ padding: '12px 14px', fontSize: 12, color: MT }}>{p.categoria || '—'}</td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span style={{ background: fonteBadge.bg, color: fonteBadge.color, padding: '3px 8px', borderRadius: 100, fontSize: 11, fontWeight: 600 }}>{p.fonte}</span>
+                          </td>
+                          <td style={{ padding: '12px 14px', fontSize: 14, fontWeight: 500, color: TX }}>
+                            {fmt(p.preco_medio)}
+                            {isMelhorPreco && p.preco_medio > 0 && <span style={{ marginLeft: 6, background: '#f0fdf4', color: '#059669', padding: '2px 6px', borderRadius: 100, fontSize: 10, fontWeight: 600 }}>Melhor</span>}
+                          </td>
+                          <td style={{ padding: '12px 14px', fontSize: 14, color: TX }}>
+                            {p.vendas_hoje}
+                            {isMaisVendas && p.vendas_hoje > 0 && <span style={{ marginLeft: 6, background: '#eff6ff', color: '#1d4ed8', padding: '2px 6px', borderRadius: 100, fontSize: 10, fontWeight: 600 }}>Top</span>}
+                          </td>
+                          <td style={{ padding: '12px 14px', fontSize: 14, color: GR, fontWeight: 600 }}>{margemEst}</td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span style={{ background: pct > 50 ? '#fef2f2' : pct > 20 ? '#fffbeb' : '#ecfdf5', color: pct > 50 ? '#dc2626' : pct > 20 ? '#d97706' : GR, padding: '3px 8px', borderRadius: 100, fontSize: 11, fontWeight: 700 }}>
+                              {pct > 0 ? '+' : ''}{pct.toFixed(0)}%
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+                {!produtos.some(p => p.fonte === 'Shopee') && (
+                  <div style={{ padding: '14px 24px', background: '#fffbeb', borderTop: `1px solid ${BD}`, fontSize: 13, color: '#d97706', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>⏳</span> Dados da Shopee aguardando coleta. Clique em &quot;Atualizar dados&quot; na aba Tendências.
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </>
 
       ) : (

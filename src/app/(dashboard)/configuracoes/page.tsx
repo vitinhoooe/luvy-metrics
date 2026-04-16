@@ -11,9 +11,6 @@ const AC = '#7c3aed'
 const GR = '#059669'
 const BD = '#e5e7eb'
 const CARD_BG = '#fff'
-const BTN = '#7c3aed'
-
-const WPP_NUMBER = process.env.NEXT_PUBLIC_WPP_SUPORTE ?? '5521999999999'
 
 const INP: React.CSSProperties = {
   width: '100%', padding: '12px 14px',
@@ -52,8 +49,6 @@ export default function ConfiguracoesPage() {
   const [perfil, setPerfil] = useState<Partial<Perfil>>({})
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
-  const [preview, setPreview] = useState<string | null>(null)
-  const [carregandoPreview, setCarregandoPreview] = useState(false)
   const supabase = createClient()
 
   useEffect(() => { buscarPerfil() }, [])
@@ -78,22 +73,6 @@ export default function ConfiguracoesPage() {
 
   function set<K extends keyof Perfil>(campo: K, valor: Perfil[K]) {
     setPerfil(prev => ({ ...prev, [campo]: valor }))
-  }
-
-  async function testarNotificacao() {
-    setCarregandoPreview(true)
-    try {
-      const res = await fetch('/api/whatsapp/testar', { method: 'POST' })
-      const json = await res.json()
-      if (res.ok) setPreview(json.preview)
-      else toast.error('Erro ao gerar preview')
-    } finally { setCarregandoPreview(false) }
-  }
-
-  function abrirWhatsApp() {
-    const numero = perfil.whatsapp || ''
-    const msg = encodeURIComponent(`Olá! Quero ativar os alertas do LuvyMetrics.\nMeu número: ${numero}`)
-    window.open(`https://wa.me/${WPP_NUMBER}?text=${msg}`, '_blank')
   }
 
   const diasTrial = perfil.trial_expira_em
@@ -131,48 +110,13 @@ export default function ConfiguracoesPage() {
           </div>
         </section>
 
-        {/* WhatsApp Alertas */}
-        <section style={CARD}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: TX, marginBottom: 6 }}>📱 Receber alertas no WhatsApp</h2>
-          <p style={{ fontSize: 13, color: MT, marginBottom: 20, lineHeight: 1.6 }}>
-            Adicione seu número abaixo para receber tendências diárias às 7h
+        {/* WhatsApp — informativo */}
+        <div style={{ background: '#f8f7ff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 8px' }}>📱 Alertas no WhatsApp</h3>
+          <p style={{ fontSize: 14, color: '#6b7280', margin: 0, lineHeight: 1.6 }}>
+            Em breve você receberá tendências diárias e alertas de oportunidade diretamente no seu WhatsApp. Nossa equipe entrará em contato para configurar.
           </p>
-
-          <div style={{ marginBottom: 16 }}>
-            <Label>Seu número de WhatsApp</Label>
-            <input value={perfil.whatsapp ?? ''} onChange={e => set('whatsapp', e.target.value)} placeholder="(11) 99999-9999" style={INP} />
-          </div>
-
-          <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-            <button onClick={salvar} disabled={salvando} style={{ padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#fff', background: BTN, border: 'none', cursor: 'pointer', opacity: salvando ? 0.5 : 1 }}>
-              {salvando ? 'Salvando...' : 'Salvar número'}
-            </button>
-            <button onClick={abrirWhatsApp} style={{ padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#fff', background: '#22c55e', border: 'none', cursor: 'pointer' }}>
-              Testar agora
-            </button>
-          </div>
-
-          <p style={{ fontSize: 12, color: MT, lineHeight: 1.6, background: 'rgba(139,92,246,0.08)', border: `1px solid ${BD}`, borderRadius: 10, padding: 12 }}>
-            Nossa equipe ativará os alertas em até 2 horas após o contato. Você receberá tendências diárias, alertas de oportunidade e relatórios semanais.
-          </p>
-
-          <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[
-              { campo: 'alertas_diarios' as const, label: 'Relatório diário de tendências', desc: 'Enviado todos os dias às 7h' },
-              { campo: 'alertas_oportunidade' as const, label: 'Alertas de oportunidade imediatos', desc: 'Quando produto ultrapassa 30% de crescimento' },
-              { campo: 'relatorio_dominical' as const, label: 'Relatório semanal completo', desc: 'Enviado todo domingo às 8h' },
-              { campo: 'alertas_estoque' as const, label: 'Alertas de estoque baixo', desc: 'Quando produto atingir quantidade mínima' },
-            ].map(item => (
-              <div key={item.campo} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                <div>
-                  <p style={{ fontSize: 14, color: TX, fontWeight: 500 }}>{item.label}</p>
-                  <p style={{ fontSize: 12, color: MT, marginTop: 2 }}>{item.desc}</p>
-                </div>
-                <Toggle ativo={!!(perfil[item.campo])} onChange={v => set(item.campo, v as never)} />
-              </div>
-            ))}
-          </div>
-        </section>
+        </div>
 
         {/* Estoque */}
         <section style={CARD}>
@@ -188,35 +132,6 @@ export default function ConfiguracoesPage() {
             </div>
             <Toggle ativo={!!(perfil.alerta_ao_zerar)} onChange={v => set('alerta_ao_zerar', v)} />
           </div>
-        </section>
-
-        {/* Testar Notificação */}
-        <section style={CARD}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 16 }}>
-            <div>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: TX, marginBottom: 4 }}>🔔 Testar Notificação</h2>
-              <p style={{ fontSize: 13, color: MT }}>Preview da mensagem que você receberá</p>
-            </div>
-            <button onClick={testarNotificacao} disabled={carregandoPreview} style={{
-              padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, flexShrink: 0,
-              background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: AC,
-              cursor: 'pointer', opacity: carregandoPreview ? 0.5 : 1,
-            }}>{carregandoPreview ? 'Gerando...' : 'Gerar preview'}</button>
-          </div>
-          {preview ? (
-            <div style={{ borderRadius: 12, background: 'rgba(7,94,84,0.2)', border: '1px solid rgba(7,94,84,0.3)', padding: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>💬</div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#22c55e' }}>LuvyMetrics Bot</span>
-              </div>
-              <pre style={{ fontSize: 12, color: '#d1d5db', whiteSpace: 'pre-wrap', fontFamily: 'monospace', lineHeight: 1.6, margin: 0 }}>{preview}</pre>
-            </div>
-          ) : (
-            <div style={{ borderRadius: 12, border: '1px dashed rgba(139,92,246,0.2)', padding: 32, textAlign: 'center' }}>
-              <p style={{ fontSize: 28, marginBottom: 8 }}>📱</p>
-              <p style={{ fontSize: 13, color: MT }}>Clique em &quot;Gerar preview&quot; para ver a mensagem</p>
-            </div>
-          )}
         </section>
 
         {/* Plano */}
