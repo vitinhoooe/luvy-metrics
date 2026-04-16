@@ -88,17 +88,39 @@ export async function POST(req: NextRequest) {
       console.error('Aviso — erro ao gerar magic link:', linkErr)
     }
 
-    // 4 — Envia email de boas-vindas via Resend
+    // 4 — Envia email de boas-vindas via Resend direto
     try {
-      const emailRes = await fetch(`${SITE_URL}/api/email/boas-vindas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, nome }),
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      await resend.emails.send({
+        from: process.env.RESEND_FROM || 'LuvyMetrics <no-reply@luvymetrics.com.br>',
+        to: email,
+        subject: '🎉 Seu acesso ao LuvyMetrics está pronto!',
+        html: `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
+<body style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:24px;color:#111827">
+  <div style="margin-bottom:28px"><span style="font-size:24px;font-weight:800"><span style="color:#111827">Luvy</span><span style="color:#7c3aed">Metrics</span></span></div>
+  <h1 style="font-size:24px;font-weight:800;color:#111827;margin:0 0 16px">Bem-vindo ao LuvyMetrics! 🎉</h1>
+  <p style="color:#374151;line-height:1.7;margin:0 0 20px">Olá ${nome || 'lojista'}! Seu acesso está ativo. Veja como começar:</p>
+  <div style="background:#f5f3ff;border-radius:12px;padding:24px;margin:0 0 24px">
+    <p style="margin:0 0 16px;font-weight:700;color:#7c3aed;font-size:16px">3 passos para seu primeiro insight:</p>
+    <p style="margin:0 0 10px;color:#374151">1️⃣ Acesse o dashboard e veja as tendências de hoje</p>
+    <p style="margin:0 0 10px;color:#374151">2️⃣ Cadastre seus produtos no estoque</p>
+    <p style="margin:0;color:#374151">3️⃣ Use a calculadora para precificar corretamente</p>
+  </div>
+  <div style="text-align:center;margin:32px 0">
+    <a href="${SITE_URL}/login" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Acessar meu dashboard →</a>
+    <p style="color:#9ca3af;font-size:13px;margin:12px 0 0">Faça login com: ${email}</p>
+  </div>
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:0 0 24px">
+    <p style="margin:0 0 12px;font-weight:700;color:#111827">Precisa de ajuda?</p>
+    <p style="margin:0;color:#374151;font-size:14px">Responda este email ou fale no WhatsApp:<br><a href="https://wa.me/5521992403773" style="color:#7c3aed">(21) 99240-3773</a></p>
+  </div>
+  <p style="color:#374151;font-size:15px">Bom lucro!<br><strong>Paulo</strong><br>Fundador · LuvyMetrics</p>
+</body></html>`,
       })
-      const emailJson = await emailRes.json()
-      console.log('Email boas-vindas:', emailJson)
+      console.log('Email boas-vindas enviado para:', email)
     } catch (emailErr) {
-      console.error('Aviso — falha no email de boas-vindas:', emailErr)
+      console.error('Aviso — falha no email:', emailErr)
     }
 
     // 5 — Log para disparo manual de WhatsApp

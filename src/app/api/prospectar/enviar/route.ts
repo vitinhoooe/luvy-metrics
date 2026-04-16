@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       </p>
 
       <div style="text-align:center;margin-bottom:24px">
-        <a href="https://pay.cakto.com.br/wi3b98b_851240" style="display:inline-block;background:#7c3aed;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">
+        <a href="https://pay.cakto.com.br/3aqtjn8" style="display:inline-block;background:#7c3aed;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">
           Testar grátis por 7 dias →
         </a>
       </div>

@@ -111,7 +111,7 @@ export default function LoginPage() {
 
         <p style={{ textAlign: 'center', color: MT, fontSize: '13px', marginTop: '24px' }}>
           Ainda não tem conta?{' '}
-          <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank" rel="noopener noreferrer"
+          <a href="https://pay.cakto.com.br/3aqtjn8" target="_blank" rel="noopener noreferrer"
             style={{ color: AC, textDecoration: 'none' }}>Assinar agora →</a>
         </p>
       </div>
