@@ -15,7 +15,11 @@ const TERMOS_TRENDS = [
 
 export async function GET(req: NextRequest) {
   const auth = req.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET
+
+  // Aceita sem auth (chamada do frontend)
+  // ou com auth correta (cron job)
+  if (auth && auth !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ erro: 'Não autorizado' }, { status: 401 })
   }
 
