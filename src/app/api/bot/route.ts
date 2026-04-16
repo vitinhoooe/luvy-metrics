@@ -1,25 +1,12 @@
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 export const maxDuration = 30
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll: () => cookieStore.getAll(),
-          setAll: (list) => list.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
-        },
-      }
-    )
-
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return new Response('Não autorizado', { status: 401 })
 
@@ -45,12 +32,10 @@ export async function POST(req: NextRequest) {
     ])
 
     const contexto = `
-DADOS REAIS DO USUÁRIO (use sempre estes dados nas respostas):
-
 TENDÊNCIAS DE HOJE (ordem decrescente de crescimento):
 ${resTendencias.data?.map((p) =>
   `- ${p.produto_nome}: +${p.crescimento_pct?.toFixed(0)}% | ${p.vendas_hoje} vendas/dia | R$${p.preco_medio?.toFixed(2)} | ${p.fonte}`
-).join('\n') || 'Nenhuma tendência coletada ainda. Informe ao usuário que os dados são coletados às 6h.'}
+).join('\n') || 'Nenhuma tendência coletada ainda. Dados são coletados às 6h.'}
 
 ESTOQUE ATUAL DO USUÁRIO:
 ${resEstoque.data?.length
@@ -58,7 +43,7 @@ ${resEstoque.data?.length
       const status = e.quantidade <= 0 ? 'ZERADO' : e.quantidade <= e.quantidade_minima ? 'BAIXO' : 'OK'
       return `- ${e.produto_nome}: ${e.quantidade} un (${status}) | custo R$${e.preco_custo?.toFixed(2)} | venda R$${e.preco_venda?.toFixed(2)}`
     }).join('\n')
-  : 'Estoque vazio. Sugira que o usuário adicione produtos.'}
+  : 'Estoque vazio. Sugira que o usuário adicione produtos na aba Estoque.'}
 
 ÚLTIMOS CÁLCULOS DE LUCRO:
 ${resCalculos.data?.map((c) =>
@@ -73,16 +58,17 @@ ${contexto}
 
 REGRAS OBRIGATÓRIAS:
 - Responda sempre em português do Brasil correto
-- Seja direto e prático — sem enrolação
-- Use os dados reais acima para embasar as respostas
-- Ao sugerir o que comprar, cite produtos específicos com o % de crescimento real
+- Seja direto e prático, sem enrolação
+- Use os dados reais acima para embasar todas as respostas
+- Ao sugerir o que comprar, cite produtos específicos com o percentual de crescimento real
 - Ao falar de estoque, mostre os dados reais do usuário
 - Máximo 2 emojis por resposta
-- Nunca invente dados que não estejam no contexto acima`,
+- Nunca invente dados que não estejam no contexto acima
+- Máximo 150 palavras por resposta`,
       messages,
     })
 
-    // Converte para SSE simples compatível com o leitor manual do cliente
+    // SSE manual — compatível com o leitor do cliente
     const readable = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder()
@@ -98,7 +84,11 @@ REGRAS OBRIGATÓRIAS:
     })
 
     return new Response(readable, {
-      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
+      headers: {
+        'Content-Type':  'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection':    'keep-alive',
+      },
     })
   } catch (e) {
     console.error('Erro bot:', e)

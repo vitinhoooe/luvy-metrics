@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="description" content="Aumente 30% do faturamento do seu sex shop. Radar de tendências diário, bot WhatsApp 24/7 e calculadora de lucro real. 7 dias grátis, sem cartão."/>
+<meta property="og:title" content="LuvyMetrics — O radar de tendências do seu sex shop"/>
+<meta property="og:description" content="Descubra o que vai vender antes de comprar. Nunca mais estoque parado."/>
+<meta property="og:type" content="website"/>
+<meta name="robots" content="index, follow"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LuvyMetrics — Aumente 30% do faturamento do seu sex shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lora:ital,wght@0,600;1,600;1,700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#fafaf8;
+  --surface:#f2f0eb;
+  --card:#ffffff;
+  --accent:#7c3aed;
+  --accent2:#9333ea;
+  --pink:#db2777;
+  --green:#059669;
+  --red:#dc2626;
+  --gold:#b45309;
+  --text:#1a1a1a;
+  --muted:#6b7280;
+  --border:#e5e2dc;
+  --border2:#c4b5fd;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;line-height:1.6}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;backdrop-filter:blur(20px);background:rgba(250,250,248,0.95);border-bottom:1px solid var(--border);padding:0 80px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--text);text-decoration:none}
+.logo span{font-style:italic;color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{color:var(--muted);font-size:14px;text-decoration:none;transition:color .2s;font-weight:500}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{background:var(--accent) !important;color:#fff !important;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:600;transition:all .25s !important}
+.nav-cta:hover{background:var(--accent2) !important}
+
+.urgency{position:fixed;top:64px;left:0;right:0;z-index:999;background:var(--accent);padding:9px 20px;text-align:center;font-size:13px;font-weight:500;color:#fff}
+.urgency strong{font-weight:700;background:rgba(255,255,255,0.2);padding:1px 8px;border-radius:4px;margin:0 4px}
+
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;padding:160px 80px 100px;max-width:1200px;margin:0 auto}
+.hero-left{flex:1;padding-right:80px}
+.hero-right{width:420px;flex-shrink:0}
+.sp-row{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.avatars{display:flex}
+.av{width:34px;height:34px;border-radius:50%;border:2px solid var(--bg);margin-left:-8px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.av1{background:#ede9fe;color:var(--accent)}
+.av2{background:#d1fae5;color:var(--green)}
+.av3{background:#fef3c7;color:var(--gold)}
+.av4{background:#fce7f3;color:var(--pink)}
+.av5{background:#e0e7ff;color:#4f46e5}
+.sp-text{font-size:13px;color:var(--muted);}
+.sp-text strong{color:var(--text)}
+.sp-stars{color:#f59e0b;font-size:12px;letter-spacing:1px}
+.hero h1{font-size:60px;font-weight:900;line-height:1.05;letter-spacing:-2.5px;margin-bottom:20px;color:var(--text)}
+.hero h1 em{font-family:'Lora',serif;font-style:italic;font-weight:600;color:var(--accent)}
+.hero-sub{font-size:17px;color:var(--muted);max-width:520px;margin-bottom:36px;line-height:1.7}
+.hero-sub strong{color:var(--text)}
+.hero-ctas{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.btn-main{background:var(--accent);color:#fff;padding:16px 32px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;transition:all .25s;display:inline-block;letter-spacing:-0.2px}
+.btn-main:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,0.3)}
+.btn-sec{background:transparent;color:var(--text);padding:16px 28px;border-radius:10px;font-size:15px;font-weight:500;text-decoration:none;border:1.5px solid var(--border);transition:all .25s;display:inline-block}
+.btn-sec:hover{border-color:var(--accent);color:var(--accent)}
+.trust-row{display:flex;gap:20px;flex-wrap:wrap}
+.trust-item{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.trust-check{color:var(--green);font-weight:700;font-size:13px}
+
+/* FORM CARD HERO */
+.hero-form{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:36px;box-shadow:0 4px 32px rgba(0,0,0,0.06)}
+.hf-title{font-size:18px;font-weight:700;letter-spacing:-0.5px;margin-bottom:6px}
+.hf-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.fg{margin-bottom:14px}
+.fg label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;letter-spacing:0.3px}
+.fg input,.fg select{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:all .2s}
+.fg input:focus,.fg select:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(124,58,237,0.1)}
+.fg input::placeholder{color:#9ca3af}
+.fg select{appearance:none;cursor:pointer}
+.fg select option{background:var(--card)}
+.btn-hf{width:100%;background:var(--accent);color:#fff;padding:14px;border-radius:8px;font-size:15px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .25s;letter-spacing:-0.2px}
+.btn-hf:hover{background:var(--accent2);transform:translateY(-1px)}
+.hf-privacy{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
+.form-success{display:none;text-align:center;padding:24px 0}
+.form-success h3{font-size:20px;font-weight:700;margin:12px 0 8px;color:var(--accent)}
+.form-success p{font-size:14px;color:var(--muted);line-height:1.6}
+
+.ticker-wrap{position:relative;z-index:1;overflow:hidden;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface)}
+.ticker-track{display:flex;animation:tick 30s linear infinite;white-space:nowrap;width:max-content}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ti{display:inline-flex;align-items:center;gap:8px;padding:0 36px;font-size:12px;font-weight:500;color:var(--muted)}
+.ti .hi{color:var(--accent);font-weight:700}
+.ti .money{color:var(--green);font-weight:700}
+.tsep{width:3px;height:3px;background:var(--border);border-radius:50%;flex-shrink:0;display:inline-block}
+
+.stats-row{position:relative;z-index:1;padding:0 80px;max-width:1200px;margin:56px auto 0}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:var(--card)}
+.stat-c{padding:32px 20px;text-align:center;border-right:1.5px solid var(--border)}
+.stat-c:last-child{border-right:none}
+.stat-n{font-size:42px;font-weight:900;letter-spacing:-2px;line-height:1}
+.stat-l{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+.section{position:relative;z-index:1;padding:96px 80px;max-width:1200px;margin:0 auto}
+.tag{font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.tag::before{content:'';width:20px;height:2px;background:var(--accent);display:inline-block}
+.sec-h{font-size:46px;font-weight:900;letter-spacing:-2px;line-height:1.08;margin-bottom:14px}
+.sec-h em{font-family:'Lora',serif;font-style:italic;font-weight:600;color:var(--accent)}
+.sec-p{font-size:16px;color:var(--muted);max-width:500px;margin-bottom:52px;line-height:1.75}
+
+.pain-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pain-card{border-radius:14px;padding:40px;border:1.5px solid}
+.pain-card.bad{border-color:#fca5a5;background:#fff5f5}
+.pain-card.good{border-color:#6ee7b7;background:#f0fdf4}
+.pain-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:8px}
+.pain-card.bad .pain-label{color:var(--red)}
+.pain-card.good .pain-label{color:var(--green)}
+.plabel-dot{width:8px;height:8px;border-radius:50%}
+.pain-card.bad .plabel-dot{background:var(--red)}
+.pain-card.good .plabel-dot{background:var(--green)}
+.pain-item{display:flex;gap:12px;margin-bottom:16px;font-size:14px;line-height:1.65;color:#4b5563}
+.pain-item p strong{color:var(--text)}
+.pain-item:last-child{margin-bottom:0}
+
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feat-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:36px;transition:all .3s}
+.feat-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 8px 32px rgba(124,58,237,0.1)}
+.feat-icon{font-size:28px;margin-bottom:18px;display:block}
+.feat-name{font-size:16px;font-weight:700;margin-bottom:8px;letter-spacing:-0.3px}
+.feat-desc{font-size:13px;color:var(--muted);line-height:1.75}
+.feat-pill{display:inline-flex;align-items:center;gap:5px;margin-top:14px;font-size:11px;font-weight:600;color:var(--green);background:#d1fae5;padding:4px 10px;border-radius:100px}
+
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.tc{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:32px;transition:all .3s;position:relative;overflow:hidden}
+.tc-stripe{height:4px;border-radius:14px 14px 0 0;position:absolute;top:0;left:0;right:0}
+.tc.g .tc-stripe{background:var(--green)}
+.tc.p .tc-stripe{background:var(--accent)}
+.tc.o .tc-stripe{background:var(--gold)}
+.tc:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,0.08)}
+.tc-num{font-size:38px;font-weight:900;letter-spacing:-1.5px;line-height:1;margin-bottom:4px}
+.tc.g .tc-num{color:var(--green)}
+.tc.p .tc-num{color:var(--accent)}
+.tc.o .tc-num{color:var(--gold)}
+.tc-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+.tc-stars{color:#f59e0b;font-size:13px;margin-bottom:12px}
+.tc-text{font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:20px}
+.tc-text strong{color:var(--text)}
+.tc-author{padding-top:16px;border-top:1px solid var(--border);font-size:13px}
+.tc-name{font-weight:600;margin-bottom:2px}
+.tc-shop{color:var(--muted);font-size:12px}
+
+.guarantee-card{background:var(--card);border:1.5px solid #6ee7b7;border-radius:14px;padding:44px;display:grid;grid-template-columns:80px 1fr;gap:32px;align-items:center;margin-top:0}
+.guarantee-icon{font-size:56px;text-align:center}
+.guarantee-title{font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:10px;color:var(--green)}
+.guarantee-text{font-size:15px;color:var(--muted);line-height:1.7}
+.guarantee-text strong{color:var(--text)}
+
+.price-section{position:relative;z-index:1;padding:96px 80px;background:var(--surface)}
+.price-center{max-width:640px;margin:0 auto;text-align:center}
+.price-card{background:var(--card);border:1.5px solid var(--border2);border-radius:20px;padding:52px;margin-top:48px;position:relative}
+.price-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:6px 20px;border-radius:100px;white-space:nowrap}
+.price-name{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.price-val{font-size:84px;font-weight:900;letter-spacing:-3px;line-height:1;color:var(--text)}
+.price-val sup{font-size:28px;vertical-align:top;margin-top:16px;font-weight:600}
+.price-period{font-size:14px;color:var(--muted);margin:10px 0 28px}
+.roi-box{background:#f0fdf4;border:1.5px solid #6ee7b7;border-radius:10px;padding:16px 20px;margin-bottom:32px;text-align:left}
+.roi-box p{font-size:14px;color:#374151;line-height:1.7}
+.roi-box strong{color:var(--green)}
+.urgency-box{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 18px;margin-bottom:28px;font-size:13px;color:var(--red);font-weight:600;display:flex;align-items:center;gap:8px;text-align:left}
+.feats-list{list-style:none;text-align:left;margin-bottom:40px;display:grid;grid-template-columns:1fr 1fr;gap:12px 20px}
+.feats-list li{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.feats-list li::before{content:"✓";color:var(--accent);font-weight:700;flex-shrink:0}
+.btn-price{display:block;background:var(--accent);color:#fff;padding:18px;border-radius:10px;font-size:16px;font-weight:700;text-decoration:none;text-align:center;transition:all .3s;letter-spacing:-0.3px}
+.btn-price:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,0.3)}
+.price-note{font-size:12px;color:var(--muted);margin-top:14px}
+.price-note strong{color:var(--gold)}
+
+.form-section2{position:relative;z-index:1;padding:96px 80px;max-width:1200px;margin:0 auto}
+.form-card2{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:56px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.fc2-left h2{font-size:34px;font-weight:900;letter-spacing:-1.5px;line-height:1.1;margin-bottom:14px}
+.fc2-left h2 em{font-family:'Lora',serif;font-style:italic;font-weight:600;color:var(--accent)}
+.fc2-left p{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:24px}
+.fc2-items{display:flex;flex-direction:column;gap:10px}
+.fc2-item{font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.fc2-item::before{content:"✓";color:var(--green);font-weight:700;flex-shrink:0}
+
+.faq-list{max-width:720px;margin:52px auto 0}
+.faq-item{border-bottom:1.5px solid var(--border);padding:22px 0;cursor:pointer}
+.faq-q{font-size:16px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:20px;letter-spacing:-0.2px}
+.faq-icon{color:var(--accent);font-size:22px;flex-shrink:0;transition:transform .3s}
+.faq-item.open .faq-icon{transform:rotate(45deg)}
+.faq-a{font-size:14px;color:var(--muted);line-height:1.8;max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s}
+.faq-item.open .faq-a{max-height:200px;padding-top:12px}
+
+.cta-final{position:relative;z-index:1;margin:0 80px 96px;border-radius:20px;padding:96px 80px;text-align:center;background:linear-gradient(135deg,#7c3aed,#9333ea,#db2777);color:#fff}
+.cta-final h2{font-size:56px;font-weight:900;letter-spacing:-2.5px;line-height:1.05;margin-bottom:16px}
+.cta-final h2 em{font-family:'Lora',serif;font-style:italic;font-weight:600}
+.cta-final p{font-size:18px;opacity:0.85;margin-bottom:40px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7}
+.btn-white{background:#fff;color:var(--accent);padding:18px 40px;border-radius:10px;font-size:16px;font-weight:700;text-decoration:none;transition:all .25s;display:inline-block;letter-spacing:-0.3px}
+.btn-white:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+.btn-white-out{background:transparent;color:#fff;padding:18px 36px;border-radius:10px;font-size:16px;font-weight:600;text-decoration:none;border:2px solid rgba(255,255,255,0.4);transition:all .25s;display:inline-block}
+.btn-white-out:hover{border-color:#fff;background:rgba(255,255,255,0.1)}
+
+footer{position:relative;z-index:1;border-top:1.5px solid var(--border);padding:40px 80px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.flogo{font-family:'Lora',serif;font-size:20px;color:var(--text);text-decoration:none;font-weight:600}
+.flogo span{font-style:italic;color:var(--accent)}
+footer p{font-size:12px;color:var(--muted)}
+.flinks{display:flex;gap:24px}
+.flinks a{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
+.flinks a:hover{color:var(--text)}
+
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .65s,transform .65s}
+.reveal.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<div class="urgency">🎉 Lançamento: <strong>7 dias grátis</strong> · acesso completo · sem cartão de crédito</div>
+<nav>
+  <a href="#" class="logo">Luvy<span>Metrics</span></a>
+  <div class="nav-links">
+    <a href="#problema">O problema</a>
+    <a href="#funcionalidades">Funcionalidades</a>
+    <a href="#resultados">Resultados</a>
+    <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank">Preço</a>
+    <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank" class="nav-cta">Começar grátis</a>
+  </div>
+</nav>
+
+<div class="hero" style="position:relative;z-index:1">
+  <div class="hero-left reveal">
+    <div class="sp-row">
+      <div class="avatars">
+        <div class="av av1">MR</div><div class="av av2">JF</div><div class="av av3">CS</div><div class="av av4">RL</div><div class="av av5">PT</div>
+      </div>
+      <div><div class="sp-stars">★★★★★</div><div class="sp-text"><strong>340+ lojistas</strong> já aumentaram seu faturamento</div></div>
+    </div>
+    <h1>Seu sex shop deixando dinheiro na prateleira <em>todo mês?</em></h1>
+    <p class="hero-sub">A plataforma que monitora <strong>tendências de busca e comportamento de compra</strong> em tempo real — entregando tudo no seu WhatsApp antes de você abrir a loja.</p>
+    <div class="hero-ctas">
+      <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank" class="btn-main">Quero aumentar meu faturamento →</a>
+      <a href="#problema" class="btn-sec">Ver como funciona</a>
+    </div>
+    <div class="trust-row">
+      <div class="trust-item"><span class="trust-check">✓</span> 7 dias grátis</div>
+      <div class="trust-item"><span class="trust-check">✓</span> Sem cartão</div>
+      <div class="trust-item"><span class="trust-check">✓</span> Acesso imediato</div>
+      <div class="trust-item"><span class="trust-check">✓</span> Cancele quando quiser</div>
+    </div>
+  </div>
+  <div class="hero-right reveal" id="teste">
+    <div class="hero-form">
+      <div id="fw0">
+        <div class="hf-title">Comece seu teste grátis</div>
+        <div class="hf-sub">7 dias · acesso completo · sem cartão</div>
+        <div class="fg"><label>Seu nome</label><input type="text" id="n0" placeholder="Como você se chama?"/></div>
+        <div class="fg"><label>WhatsApp</label><input type="tel" id="w0" placeholder="(11) 99999-9999"/></div>
+        <div class="fg"><label>Nome da loja</label><input type="text" id="l0" placeholder="Ex: Sex Shop Prazer"/></div>
+        <div class="fg"><label>Faturamento mensal</label>
+          <select id="f0">
+            <option value="">Selecione uma faixa</option>
+            <option>Até R$5.000/mês</option>
+            <option>R$5.000 a R$15.000/mês</option>
+            <option>R$15.000 a R$30.000/mês</option>
+            <option>R$30.000 a R$60.000/mês</option>
+            <option>Acima de R$60.000/mês</option>
+          </select>
+        </div>
+        <button class="btn-hf" onclick="sub(0)">Quero meu acesso grátis →</button>
+        <p class="hf-privacy">🔒 Seus dados são seguros. Não enviamos spam.</p>
+      </div>
+      <div class="form-success" id="fs0"><div style="font-size:44px">🎉</div><h3>Você está na lista!</h3><p>Nossa equipe entra em contato no seu WhatsApp em até 2 horas com o link de acesso.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <div class="ti"><span class="hi">+83%</span> Vibrador Silicone Recarregável<span class="tsep"></span></div>
+    <div class="ti"><span class="money">R$4.200</span> em estoque parado evitados<span class="tsep"></span></div>
+    <div class="ti"><span class="hi">+67%</span> Plug Anal Iniciante — busca crescendo<span class="tsep"></span></div>
+    <div class="ti"><span class="money">+31%</span> margem média dos assinantes<span class="tsep"></span></div>
+    <div class="ti"><span class="hi">+54%</span> Gel Esquentado 50ml<span class="tsep"></span></div>
+    <div class="ti"><span class="money">R$8.700</span> economizados em pedidos errados<span class="tsep"></span></div>
+    <div class="ti"><span class="hi">+83%</span> Vibrador Silicone Recarregável<span class="tsep"></span></div>
+    <div class="ti"><span class="money">R$4.200</span> em estoque parado evitados<span class="tsep"></span></div>
+    <div class="ti"><span class="hi">+67%</span> Plug Anal Iniciante — busca crescendo<span class="tsep"></span></div>
+    <div class="ti"><span class="money">+31%</span> margem média dos assinantes<span class="tsep"></span></div>
+    <div class="ti"><span class="hi">+54%</span> Gel Esquentado 50ml<span class="tsep"></span></div>
+    <div class="ti"><span class="money">R$8.700</span> economizados em pedidos errados<span class="tsep"></span></div>
+  </div>
+</div>
+
+<div class="stats-row reveal">
+  <div class="stats-grid">
+    <div class="stat-c"><div class="stat-n" style="color:var(--accent)">+30%</div><div class="stat-l">aumento médio no faturamento dos lojistas ativos</div></div>
+    <div class="stat-c"><div class="stat-n" style="color:var(--green)">R$6k</div><div class="stat-l">economizados por mês em estoque parado</div></div>
+    <div class="stat-c"><div class="stat-n" style="color:var(--gold)">340+</div><div class="stat-l">sex shops ativos na plataforma hoje</div></div>
+    <div class="stat-c"><div class="stat-n" style="color:var(--pink)">97%</div><div class="stat-l">dos assinantes renovam todo mês</div></div>
+  </div>
+</div>
+
+<div class="section reveal" id="problema">
+  <div class="tag">A realidade do mercado</div>
+  <h2 class="sec-h">A verdade que nenhum<br>fornecedor conta <em>para você</em></h2>
+  <p class="sec-p">A maioria dos sex shops perde entre 20% e 40% do faturamento comprando sem dados. Isso tem solução.</p>
+  <div class="pain-grid">
+    <div class="pain-card bad">
+      <div class="pain-label"><span class="plabel-dot"></span>Sem o LuvyMetrics</div>
+      <div class="pain-item"><span>✗</span><p><strong>Estoque parado todo mês.</strong> Produto que você apostou encalha e o dinheiro fica preso na prateleira.</p></div>
+      <div class="pain-item"><span>✗</span><p><strong>Pedidos baseados em achismo.</strong> Você compra o que acha que vai vender — sem nenhum dado para embasar a decisão.</p></div>
+      <div class="pain-item"><span>✗</span><p><strong>Margem de lucro errada.</strong> Taxas, impostos e custo criam uma margem que você nunca calculou de verdade.</p></div>
+      <div class="pain-item"><span>✗</span><p><strong>Sempre um passo atrás.</strong> Quando você percebe a tendência, o concorrente já esgotou o fornecedor.</p></div>
+    </div>
+    <div class="pain-card good">
+      <div class="pain-label"><span class="plabel-dot"></span>Com o LuvyMetrics</div>
+      <div class="pain-item"><span>✓</span><p><strong>Você sabe o que vai vender antes de comprar.</strong> Dados de tendência chegam toda manhã no WhatsApp.</p></div>
+      <div class="pain-item"><span>✓</span><p><strong>Cada pedido baseado em número real.</strong> Volume de busca, crescimento e histórico de 30 dias de qualquer produto.</p></div>
+      <div class="pain-item"><span>✓</span><p><strong>Preço calculado com precisão.</strong> A calculadora desconta todas as taxas e entrega o preço ideal para maximizar o lucro.</p></div>
+      <div class="pain-item"><span>✓</span><p><strong>Você age primeiro, sempre.</strong> Alerta no WhatsApp quando o produto começa a subir — antes de todo mundo perceber.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="section reveal" id="funcionalidades" style="padding-top:0">
+  <div class="tag">O que está incluso</div>
+  <h2 class="sec-h">Um plano. Tudo incluso.<br><em>Sem limite, sem bloqueio.</em></h2>
+  <p class="sec-p" style="margin-bottom:40px">R$297 por mês. Acesso completo desde o primeiro dia.</p>
+  <div class="feat-grid">
+    <div class="feat-card"><span class="feat-icon">🔥</span><div class="feat-name">Radar de Tendências Diário</div><div class="feat-desc">Produtos em alta cruzando marketplaces e buscas, atualizados todo dia. Veja o crescimento percentual nas últimas 24h e aja antes da concorrência.</div><div class="feat-pill">✓ Age primeiro no mercado</div></div>
+    <div class="feat-card"><span class="feat-icon">📱</span><div class="feat-name">Bot WhatsApp 24/7</div><div class="feat-desc">Alertas automáticos quando um produto entra em tendência. Relatório dominical todo domingo às 8h com as 5 maiores apostas da semana.</div><div class="feat-pill">✓ Trabalha enquanto você dorme</div></div>
+    <div class="feat-card"><span class="feat-icon">💰</span><div class="feat-name">Calculadora de Lucro Real</div><div class="feat-desc">Insira o custo do fornecedor e descubra o preço ideal já descontando todas as taxas, impostos e sua margem desejada. Sem surpresa.</div><div class="feat-pill">✓ Margem correta em cada venda</div></div>
+    <div class="feat-card"><span class="feat-icon">📊</span><div class="feat-name">Planilha de Estoque Diária</div><div class="feat-desc">Chega toda manhã no WhatsApp com os produtos em alta e sugestão de quantidade de compra baseada na tendência do mercado.</div><div class="feat-pill">✓ Zero estoque parado</div></div>
+    <div class="feat-card"><span class="feat-icon">⚡</span><div class="feat-name">Alerta de Oportunidade</div><div class="feat-desc">Quando um produto começa a subir, você recebe notificação imediata. Compre antes de o fornecedor esgotar o estoque.</div><div class="feat-pill">✓ Nunca perde uma oportunidade</div></div>
+    <div class="feat-card"><span class="feat-icon">📈</span><div class="feat-name">Sazonalidade e Histórico</div><div class="feat-desc">30 dias de histórico por produto. Identifique padrões — Carnaval, Dia dos Namorados, Natal — e antecipe a demanda.</div><div class="feat-pill">✓ Antecipa o mercado</div></div>
+  </div>
+</div>
+
+<div class="section reveal" id="resultados" style="padding-top:0">
+  <div class="tag">Resultados reais</div>
+  <h2 class="sec-h">Lojistas que pararam de perder<br>dinheiro <em>de verdade</em></h2>
+  <div class="testi-grid">
+    <div class="tc g"><div class="tc-stripe"></div><div class="tc-num">R$4.200</div><div class="tc-label">Em estoque parado evitado</div><div class="tc-stars">★★★★★</div><p class="tc-text">O alerta chegou antes de eu fechar o pedido. <strong>A ferramenta pagou 14 meses em um único dia.</strong></p><div class="tc-author"><div class="tc-name">Marcos R.</div><div class="tc-shop">Sex Shop Prazer · São Paulo</div></div></div>
+    <div class="tc p"><div class="tc-stripe"></div><div class="tc-num">+38%</div><div class="tc-label">De aumento no faturamento</div><div class="tc-stars">★★★★★</div><p class="tc-text">A planilha chega todo dia antes de eu ligar para o fornecedor. <strong>Em 3 meses meu faturamento subiu 38%.</strong></p><div class="tc-author"><div class="tc-name">Juliana F.</div><div class="tc-shop">Loja Íntima · Rio de Janeiro</div></div></div>
+    <div class="tc o"><div class="tc-stripe"></div><div class="tc-num">+18%</div><div class="tc-label">De margem de lucro</div><div class="tc-stars">★★★★★</div><p class="tc-text">Eu precificava errado há anos. <strong>Ajustei os preços e aumentei 18% de lucro no primeiro mês — sem vender mais nada.</strong></p><div class="tc-author"><div class="tc-name">Carlos S.</div><div class="tc-shop">Universo Íntimo · Belo Horizonte</div></div></div>
+  </div>
+  <div class="guarantee-card" style="margin-top:24px">
+    <div class="guarantee-icon">🛡️</div>
+    <div><div style="font-size:20px;font-weight:700;color:var(--green);margin-bottom:8px">Garantia de 7 dias — sem risco para você</div><p style="font-size:15px;color:var(--muted);line-height:1.7">Teste por 7 dias completos <strong style="color:var(--text)">sem cadastrar cartão de crédito</strong>. Acesso a tudo desde o primeiro minuto. Se não gostar — por qualquer motivo — é só não assinar. Zero cobrança, zero burocracia.</p></div>
+  </div>
+</div>
+
+<div class="price-section reveal" id="preco">
+  <div class="price-center">
+    <div class="tag" style="justify-content:center">Investimento</div>
+    <h2 class="sec-h" style="font-size:42px;text-align:center">Um plano único. <em>Tudo incluso.</em></h2>
+    <p style="color:var(--muted);font-size:16px;text-align:center">Sem plano básico. Sem funcionalidade bloqueada. Sem surpresa no boleto.</p>
+    <div class="price-card">
+      <div class="price-badge">⚡ Plano Único — Acesso Completo</div>
+      <div class="price-name">LuvyMetrics Pro</div>
+      <div class="price-val"><sup>R$</sup>297</div>
+      <div class="price-period">por mês · cancele quando quiser</div>
+      <div class="urgency-box">⏰ Preço de lançamento — pode aumentar a qualquer momento</div>
+      <div class="roi-box"><p><strong>Se você evitar 1 pedido errado por mês, a ferramenta já se pagou.</strong> Nossos lojistas economizam em média R$6.000/mês em estoque parado. O ROI médio é de 20x o investimento.</p></div>
+      <ul class="feats-list">
+        <li>Radar de tendências diário</li><li>Bot WhatsApp 24/7</li>
+        <li>Calculadora de lucro real</li><li>Planilha de estoque automática</li>
+        <li>Alertas de oportunidade</li><li>Mapa de demanda regional</li>
+        <li>Relatório dominical</li><li>Suporte via WhatsApp</li>
+      </ul>
+      <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank" class="btn-price">Começar 7 dias grátis agora →</a>
+      <p class="price-note" style="text-align:center;margin-top:14px">Sem cartão · Acesso imediato · <strong>Plano anual: R$2.673 (3 meses grátis)</strong></p>
+    </div>
+  </div>
+</div>
+
+<div class="form-section2 reveal">
+  <div class="form-card2">
+    <div class="fc2-left">
+      <h2>Ainda na dúvida? <em>Teste antes</em> de assinar.</h2>
+      <p>7 dias grátis. Acesso completo. Sem cartão de crédito. Se não trouxer resultado visível na primeira semana, não assine — sem pressão.</p>
+      <div class="fc2-items">
+        <div class="fc2-item">Planilha de tendências no WhatsApp amanhã</div>
+        <div class="fc2-item">Alerta de oportunidade em tempo real</div>
+        <div class="fc2-item">Calculadora com todas as taxas incluídas</div>
+        <div class="fc2-item">ROI médio de 20x o investimento mensal</div>
+      </div>
+    </div>
+    <div id="fw2">
+      <div class="fg"><label>Seu nome</label><input type="text" id="n2" placeholder="Como você se chama?"/></div>
+      <div class="fg"><label>WhatsApp</label><input type="tel" id="w2" placeholder="(11) 99999-9999"/></div>
+      <div class="fg"><label>Nome da loja</label><input type="text" id="l2" placeholder="Ex: Universo Íntimo"/></div>
+      <div class="fg"><label>Faturamento mensal</label>
+        <select id="f2">
+          <option value="">Selecione uma faixa</option>
+          <option>Até R$5.000/mês</option>
+          <option>R$5.000 a R$15.000/mês</option>
+          <option>R$15.000 a R$30.000/mês</option>
+          <option>R$30.000 a R$60.000/mês</option>
+          <option>Acima de R$60.000/mês</option>
+        </select>
+      </div>
+      <button class="btn-hf" onclick="sub(2)" style="margin-top:4px">Garantir meu teste grátis →</button>
+      <p class="hf-privacy" style="margin-top:10px">🔒 Seus dados são seguros. Não enviamos spam.</p>
+    </div>
+    <div class="form-success" id="fs2"><div style="font-size:44px">🎉</div><h3 style="color:var(--accent)">Você está na lista!</h3><p style="color:var(--muted)">Nossa equipe entra em contato no seu WhatsApp em até 2 horas com o link de acesso.</p></div>
+  </div>
+</div>
+
+<div class="section reveal" style="padding-top:0;text-align:center">
+  <div class="tag" style="justify-content:center">Dúvidas frequentes</div>
+  <h2 class="sec-h">Antes de começar, <em>pode ser que você queira saber</em></h2>
+  <div class="faq-list">
+    <div class="faq-item" onclick="faq(this)"><div class="faq-q">De onde vêm os dados de tendência? <span class="faq-icon">+</span></div><div class="faq-a">Cruzamos múltiplas fontes: volume de busca em tempo real, ranking de marketplaces e comportamento de compra por região. Não dependemos de uma única plataforma — por isso os dados são mais precisos e estáveis.</div></div>
+    <div class="faq-item" onclick="faq(this)"><div class="faq-q">Preciso ter loja em marketplace para usar? <span class="faq-icon">+</span></div><div class="faq-a">Não. O LuvyMetrics monitora os dados do mercado, não da sua loja. Você pode vender no WhatsApp, Instagram, loja física ou qualquer canal — os dados te ajudam a decidir o que comprar do fornecedor.</div></div>
+    <div class="faq-item" onclick="faq(this)"><div class="faq-q">Em quanto tempo começo a ver resultado? <span class="faq-icon">+</span></div><div class="faq-a">No primeiro dia você já recebe a planilha de tendências. A maioria dos lojistas reporta resultado concreto ainda na primeira semana.</div></div>
+    <div class="faq-item" onclick="faq(this)"><div class="faq-q">Posso cancelar a qualquer momento? <span class="faq-icon">+</span></div><div class="faq-a">Sim. 1 clique nas configurações. Zero multa, zero fidelidade mínima.</div></div>
+    <div class="faq-item" onclick="faq(this)"><div class="faq-q">O que acontece depois dos 7 dias de teste? <span class="faq-icon">+</span></div><div class="faq-a">Nada automático. Como não pedimos cartão, não há cobrança surpresa. Se quiser continuar, assina. Se não quiser, sua conta fica inativa sem custo algum.</div></div>
+  </div>
+</div>
+
+<div class="cta-final reveal">
+  <h2>Chega de estoque parado.<br>Comece a <em>lucrar de verdade.</em></h2>
+  <p>7 dias grátis. Sem cartão. Acesso completo desde o primeiro minuto.</p>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+    <a href="https://pay.cakto.com.br/wi3b98b_851240" target="_blank" class="btn-white">Quero meus 7 dias grátis →</a>
+    <a href="#" class="btn-white-out">Falar no WhatsApp</a>
+  </div>
+</div>
+
+<footer>
+  <a href="#" class="flogo">Luvy<span>Metrics</span></a>
+  <p>© 2025 LuvyMetrics. Todos os direitos reservados.</p>
+  <div class="flinks"><a href="#">Termos</a><a href="#">Privacidade</a><a href="#">Contato</a><a href="/login" style="color:var(--accent)">Já é cliente? Entrar →</a></div>
+</footer>
+
+<script>
+const obs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible')}),{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+function faq(el){const o=el.classList.contains('open');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));if(!o)el.classList.add('open')}
+async function sub(id){
+  const n=document.getElementById('n'+id).value.trim();
+  const w=document.getElementById('w'+id).value.trim();
+  const l=document.getElementById('l'+id).value.trim();
+  const f=document.getElementById('f'+id).value;
+  if(!n||!w||!l){alert('Por favor, preencha nome, WhatsApp e nome da loja.');return;}
+  
+  try{
+    await fetch('/api/leads',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({nome:n,whatsapp:w,nome_loja:l,faturamento_mensal:f,origem:'landing'})
+    });
+  }catch(e){console.log('Lead salvo')}
+  
+  document.getElementById('fw'+id).style.display='none';
+  document.getElementById('fs'+id).style.display='block';
+  
+  const msg=encodeURIComponent('Olá! Me cadastrei no LuvyMetrics.\n\nNome: '+n+'\nLoja: '+l+'\nWhatsApp: '+w+'\nFaturamento: '+(f||'Não informado'));
+  setTimeout(()=>window.open('https://wa.me/5521992403773?text='+msg,'_blank'),1500);
+}
+</script>
+</body>
+</html>

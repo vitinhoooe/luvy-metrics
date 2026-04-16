@@ -4,21 +4,25 @@ import { useState, useEffect, useCallback } from 'react'
 import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import type { ProdutoTendencia } from '@/types'
 
-// ─── Constantes ───────────────────────────────────────────────────
 const FONTES     = ['Todos', 'Mercado Livre', 'Shopee', 'Google Trends']
-const CATEGORIAS = ['Todos', 'Vibradores', 'Plugs Anais', 'Lubrificantes', 'Acessórios', 'Kits', 'Adultos']
+const CATEGORIAS = ['Todos', 'Vibradores', 'Géis', 'Plugs', 'Roupas Íntimas', 'Acessórios', 'Outros']
 const PERIODOS   = ['Hoje', '7 dias', '30 dias']
 
+const TX  = '#f5f0ff'
+const MT  = '#9d8faa'
+const AC  = '#c840e0'
+const BD  = 'rgba(200,64,224,0.15)'
+
 const SAZONALIDADE = [
-  { evento: 'Carnaval',          data: '2026-02-14', emoji: '🎭', produtos: ['Fantasias sensuais', 'Acessórios de festa', 'Gel corporal'], cor: 'from-orange-600/20 to-yellow-600/20', borda: 'border-orange-500/20' },
-  { evento: 'Dia dos Namorados', data: '2026-06-12', emoji: '💑', produtos: ['Vibradores premium', 'Kits para casais', 'Lubrificantes especiais'], cor: 'from-pink-600/20 to-red-600/20', borda: 'border-pink-500/20' },
-  { evento: 'Halloween',         data: '2026-10-31', emoji: '🎃', produtos: ['Fantasias adultas', 'Acessórios temáticos', 'Kits surpresa'], cor: 'from-orange-700/20 to-purple-700/20', borda: 'border-orange-600/20' },
-  { evento: 'Natal / Réveillon', data: '2026-12-25', emoji: '🎁', produtos: ['Kits presentes íntimos', 'Embalagens especiais', 'Combos casal'], cor: 'from-red-600/20 to-green-700/20', borda: 'border-red-500/20' },
+  { evento: 'Carnaval',          data: '2027-02-14', emoji: '🎭', produtos: ['Fantasias sensuais', 'Acessórios de festa', 'Gel corporal'],       cor: 'from-orange-600/20 to-yellow-600/20', borda: 'border-orange-500/20' },
+  { evento: 'Dia dos Namorados', data: '2026-06-12', emoji: '💑', produtos: ['Vibradores premium', 'Kits para casais', 'Lubrificantes especiais'], cor: 'from-pink-600/20 to-red-600/20',   borda: 'border-pink-500/20' },
+  { evento: 'Halloween',         data: '2026-10-31', emoji: '🎃', produtos: ['Fantasias adultas', 'Acessórios temáticos', 'Kits surpresa'],        cor: 'from-orange-700/20 to-purple-700/20', borda: 'border-orange-600/20' },
+  { evento: 'Natal / Réveillon', data: '2026-12-25', emoji: '🎁', produtos: ['Kits presentes íntimos', 'Embalagens especiais', 'Combos casal'],    cor: 'from-red-600/20 to-green-700/20', borda: 'border-red-500/20' },
 ]
 
-// ─── Utilitários ──────────────────────────────────────────────────
 function diasFaltam(dataStr: string) {
   return Math.max(0, Math.ceil((new Date(dataStr).getTime() - Date.now()) / 86_400_000))
 }
@@ -43,31 +47,32 @@ function emojiFonte(fonte: string) {
   return '🔵'
 }
 
-// ─── Card de produto ──────────────────────────────────────────────
-function CardProduto({ produto, onAdicionarEstoque }: { produto: ProdutoTendencia; onAdicionarEstoque: (p: ProdutoTendencia) => void }) {
+// ─── Card produto ─────────────────────────────────────────────────
+function CardProduto({ produto, onAdicionarEstoque, onCalcular }: {
+  produto: ProdutoTendencia
+  onAdicionarEstoque: (p: ProdutoTendencia) => void
+  onCalcular: (p: ProdutoTendencia) => void
+}) {
   const sparkline = gerarSparkline(produto)
   const pct = produto.crescimento_pct
 
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:border-[#c840e0]/30 transition-all group flex flex-col">
-      {/* Topo */}
+    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:border-[#c840e0]/30 transition-all flex flex-col">
       <div className="flex items-start justify-between gap-2 mb-3">
         <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 flex-1">{produto.produto_nome}</h3>
         <span className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full border ${
           pct > 50 ? 'bg-red-500/15 text-red-400 border-red-500/25 animate-pulse' :
           pct >= 25 ? 'bg-green-500/15 text-green-400 border-green-500/25' :
-                      'bg-yellow-500/15 text-yellow-400 border-yellow-500/25'
+                     'bg-yellow-500/15 text-yellow-400 border-yellow-500/25'
         }`}>
           {pct > 50 ? '🔥' : pct >= 25 ? '↑' : '→'} +{pct.toFixed(0)}%
         </span>
       </div>
 
-      {/* Badge fonte */}
       <span className={`text-xs font-medium px-2 py-0.5 rounded-full border w-fit mb-3 ${badgeFonte(produto.fonte)}`}>
         {emojiFonte(produto.fonte)} {produto.fonte}
       </span>
 
-      {/* Sparkline */}
       <div className="flex-1 mb-3">
         <ResponsiveContainer width="100%" height={55}>
           <LineChart data={sparkline}>
@@ -80,29 +85,30 @@ function CardProduto({ produto, onAdicionarEstoque }: { produto: ProdutoTendenci
         </ResponsiveContainer>
       </div>
 
-      {/* Métricas */}
       <div className="grid grid-cols-2 gap-2 mb-4">
         <div>
-          <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Preço médio</p>
+          <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Preço médio</p>
           <p className="text-sm font-bold text-white">
             {produto.preco_medio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
         </div>
         <div>
-          <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Vendas/dia</p>
+          <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Vendas/dia</p>
           <p className="text-sm font-bold text-white">{produto.vendas_hoje.toLocaleString('pt-BR')}</p>
         </div>
       </div>
 
-      {/* Botões */}
       <div className="flex gap-2 mt-auto">
         {produto.url_produto ? (
           <a href={produto.url_produto} target="_blank" rel="noopener noreferrer"
             className="flex-1 py-2 rounded-xl border border-white/10 text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white transition-all text-center">
-            Ver produto ↗
+            Ver ↗
           </a>
         ) : (
-          <div className="flex-1" />
+          <button onClick={() => onCalcular(produto)}
+            className="flex-1 py-2 rounded-xl border border-white/10 text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white transition-all">
+            💰 Calcular
+          </button>
         )}
         <button onClick={() => onAdicionarEstoque(produto)}
           className="flex-1 py-2 rounded-xl bg-[#c840e0]/10 border border-[#c840e0]/20 text-[#c840e0] text-xs font-medium hover:bg-[#c840e0]/20 transition-all">
@@ -115,23 +121,26 @@ function CardProduto({ produto, onAdicionarEstoque }: { produto: ProdutoTendenci
 
 // ─── Página principal ─────────────────────────────────────────────
 export default function TendenciasPage() {
-  const [produtos, setProdutos] = useState<ProdutoTendencia[]>([])
-  const [carregando, setCarregando] = useState(true)
+  const router     = useRouter()
+  const [produtos,    setProdutos]    = useState<ProdutoTendencia[]>([])
+  const [carregando,  setCarregando]  = useState(true)
   const [atualizando, setAtualizando] = useState(false)
-  const [busca, setBusca] = useState('')
-  const [fonte, setFonte] = useState('Todos')
-  const [categoria, setCategoria] = useState('Todos')
-  const [periodo, setPeriodo] = useState('Hoje')
-  const [aba, setAba] = useState<'tendencias' | 'sazonalidade'>('tendencias')
+  const [busca,       setBusca]       = useState('')
+  const [fonte,       setFonte]       = useState('Todos')
+  const [categoria,   setCategoria]   = useState('Todos')
+  const [periodo,     setPeriodo]     = useState('Hoje')
+  const [aba,         setAba]         = useState<'tendencias' | 'sazonalidade'>('tendencias')
 
   const buscarProdutos = useCallback(async () => {
     setCarregando(true)
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('produtos_tendencia')
-      .select('*')
-      .order('crescimento_pct', { ascending: false })
-    setProdutos(data ?? [])
+    try {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('produtos_tendencia')
+        .select('*')
+        .order('crescimento_pct', { ascending: false })
+      setProdutos(data ?? [])
+    } catch {}
     setCarregando(false)
   }, [])
 
@@ -150,23 +159,25 @@ export default function TendenciasPage() {
   }
 
   async function adicionarAoEstoque(produto: ProdutoTendencia) {
-    const res = await fetch('/api/estoque', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        produto_nome: produto.produto_nome,
-        quantidade: 0,
-        quantidade_minima: 5,
-        preco_custo: produto.preco_medio * 0.5,
-        preco_venda: produto.preco_medio,
-        categoria: produto.categoria,
-      }),
-    })
-    if (res.ok) toast.success('Produto adicionado ao estoque!')
-    else toast.error('Erro ao adicionar ao estoque')
+    try {
+      const res = await fetch('/api/estoque', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          produto_nome: produto.produto_nome, quantidade: 0, quantidade_minima: 5,
+          preco_custo: produto.preco_medio * 0.5, preco_venda: produto.preco_medio,
+          categoria: produto.categoria,
+        }),
+      })
+      if (res.ok) toast.success('Produto adicionado ao estoque!')
+      else toast.error('Erro ao adicionar ao estoque')
+    } catch { toast.error('Erro interno') }
   }
 
-  // Filtros
+  function irParaCalculadora(produto: ProdutoTendencia) {
+    router.push(`/calculadora?produto=${encodeURIComponent(produto.produto_nome)}&preco=${produto.preco_medio}`)
+  }
+
   const filtrados = produtos.filter((p) => {
     const matchBusca = p.produto_nome.toLowerCase().includes(busca.toLowerCase())
     const matchFonte = fonte === 'Todos' || p.fonte === fonte
@@ -174,7 +185,6 @@ export default function TendenciasPage() {
     return matchBusca && matchFonte && matchCat
   })
 
-  // Produto explosão do dia
   const explosao = filtrados[0]
 
   return (
@@ -188,7 +198,9 @@ export default function TendenciasPage() {
       <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit mb-6 border border-white/10">
         {(['tendencias', 'sazonalidade'] as const).map((a) => (
           <button key={a} onClick={() => setAba(a)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === a ? 'bg-[#c840e0] text-white shadow-sm' : 'text-zinc-400 hover:text-white'}`}>
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              aba === a ? 'bg-[#c840e0] text-white shadow-sm' : 'text-zinc-400 hover:text-white'
+            }`}>
             {a === 'tendencias' ? '🔥 Tendências' : '📅 Sazonalidade'}
           </button>
         ))}
@@ -198,25 +210,31 @@ export default function TendenciasPage() {
         <>
           {/* Filtros */}
           <div className="flex flex-wrap gap-3 mb-6">
-            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar produto..."
+            <input value={busca} onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar produto..."
               className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40 min-w-[200px]" />
+
             {[
-              { label: 'Fonte', val: fonte, set: setFonte, opts: FONTES },
-              { label: 'Categoria', val: categoria, set: setCategoria, opts: CATEGORIAS },
-            ].map(({ val, set, opts }) => (
-              <select key={val} value={val} onChange={(e) => set(e.target.value)}
+              { val: fonte,     set: setFonte,     opts: FONTES },
+              { val: categoria, set: setCategoria, opts: CATEGORIAS },
+            ].map(({ val, set, opts }, i) => (
+              <select key={i} value={val} onChange={(e) => set(e.target.value)}
                 className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c840e0]/40">
                 {opts.map((o) => <option key={o} value={o} className="bg-[#0d0a13]">{o}</option>)}
               </select>
             ))}
+
             <div className="flex gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
               {PERIODOS.map((p) => (
                 <button key={p} onClick={() => setPeriodo(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${periodo === p ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'}`}>
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    periodo === p ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'
+                  }`}>
                   {p}
                 </button>
               ))}
             </div>
+
             <button onClick={atualizarDados} disabled={atualizando}
               className="px-4 py-2.5 rounded-xl bg-[#c840e0]/15 border border-[#c840e0]/25 text-[#c840e0] text-sm font-medium hover:bg-[#c840e0]/25 disabled:opacity-50 transition-all ml-auto">
               {atualizando ? 'Atualizando...' : '↻ Atualizar dados'}
@@ -278,17 +296,17 @@ export default function TendenciasPage() {
                 </div>
               )}
 
-              {/* Grid de cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtrados.map((p) => (
-                  <CardProduto key={p.id} produto={p} onAdicionarEstoque={adicionarAoEstoque} />
+                  <CardProduto key={p.id} produto={p}
+                    onAdicionarEstoque={adicionarAoEstoque}
+                    onCalcular={irParaCalculadora} />
                 ))}
               </div>
             </>
           )}
         </>
       ) : (
-        // Sazonalidade
         <div className="space-y-4">
           <p className="text-sm text-zinc-400 mb-4">Planeje seu estoque com antecedência para os grandes eventos.</p>
           {SAZONALIDADE.map((s) => {
@@ -318,9 +336,6 @@ export default function TendenciasPage() {
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-zinc-600 mt-3">
-                  💡 Recomendação: abasteça o estoque com pelo menos {Math.min(60, dias)} dias de antecedência.
-                </p>
               </div>
             )
           })}
