@@ -12,11 +12,33 @@ export default function LoginPage() {
   const [enviado, setEnviado] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const [erro, setErro] = useState('')
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setErro('')
+
+    // Verifica se variáveis existem
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setErro('Configuração do sistema incompleta. Contate o suporte.')
+      setLoading(false)
+      return
+    }
 
     try {
+      // Testa conexão antes
+      const healthRes = await fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/auth/v1/health', {
+        headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY },
+        signal: AbortSignal.timeout(5000),
+      }).catch(() => null)
+
+      if (!healthRes || !healthRes.ok) {
+        setErro('Servidor temporariamente indisponível. Tente novamente em 1 minuto.')
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -24,14 +46,24 @@ export default function LoginPage() {
       })
 
       if (error) {
-        alert('Erro: ' + error.message)
+        if (error.message.includes('rate limit')) {
+          setErro('Muitas tentativas. Aguarde 1 minuto.')
+        } else if (error.message.includes('sending')) {
+          setErro('Erro ao enviar email. O servidor de email pode estar temporariamente indisponível.')
+        } else {
+          setErro(error.message)
+        }
         setLoading(false)
         return
       }
 
       setEnviado(true)
-    } catch {
-      alert('Erro de conexão. Tente novamente.')
+    } catch (err: any) {
+      if (err?.message?.includes('fetch') || err?.message?.includes('network') || err?.message?.includes('resolve')) {
+        setErro('Erro de conexão. Verifique sua internet e tente novamente.')
+      } else {
+        setErro('Erro inesperado: ' + (err?.message || 'Tente novamente'))
+      }
     }
 
     setLoading(false)
@@ -94,6 +126,9 @@ export default function LoginPage() {
                   onFocus={e => (e.target.style.borderColor = '#8b5cf6')}
                   onBlur={e => (e.target.style.borderColor = BD)}
                 />
+                {erro && (
+                  <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 16, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', lineHeight: 1.5 }}>{erro}</p>
+                )}
                 <button type="submit" disabled={loading} style={{
                   width: '100%', padding: '14px',
                   background: loading ? 'rgba(139,92,246,0.5)' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
