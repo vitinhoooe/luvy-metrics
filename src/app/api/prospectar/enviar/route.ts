@@ -90,7 +90,7 @@ async function enviarEmailPara(email: string, nomeLoja?: string, cidade?: string
     <p style="margin:0;color:#374151">✓ Dados de demanda por região do Brasil</p>
   </div>
   <div style="text-align:center;margin:28px 0">
-    <a href="https://pay.cakto.com.br/3aqtjn8" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Testar 7 dias grátis →</a>
+    <a href="https://pay.cakto.com.br/3at3fir_852772" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Testar 7 dias grátis →</a>
     <p style="color:#9ca3af;font-size:13px;margin:10px 0 4px">Sem cartão · Cancele quando quiser</p>
     <p style="color:#7c3aed;font-size:15px;font-weight:700;margin:0">Apenas R$47/mês no lançamento</p>
   </div>

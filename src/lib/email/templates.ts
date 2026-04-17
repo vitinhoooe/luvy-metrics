@@ -1,4 +1,4 @@
-const CAKTO = 'https://pay.cakto.com.br/3aqtjn8'
+const CAKTO = 'https://pay.cakto.com.br/3at3fir_852772'
 const SITE  = 'https://luvymetrics.com.br'
 const WPP   = process.env.NEXT_PUBLIC_WPP_SUPORTE ?? '5521999999999'
 
