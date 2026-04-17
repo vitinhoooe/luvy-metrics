@@ -40,19 +40,22 @@ export async function POST(req: Request) {
 
     // Modo individual
     if (!email) return NextResponse.json({ error: 'Email obrigatório' }, { status: 400 })
-    await enviarEmailPara(email, nome_loja, cidade)
 
-    // Salva prospecto
+    // Salva prospecto primeiro para ter o ID
+    let prospectoId: string | null = null
     try {
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        await supabase.from('prospectos').insert({
+        const { data: inserted } = await supabase.from('prospectos').insert({
           user_id: user.id, email, nome_loja: nome_loja || null,
           cidade: cidade || null, status: 'enviado', enviado_em: new Date().toISOString(),
-        })
+        }).select('id').single()
+        prospectoId = inserted?.id || null
       }
     } catch {}
+
+    await enviarEmailPara(email, nome_loja, cidade, prospectoId)
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
@@ -61,7 +64,7 @@ export async function POST(req: Request) {
   }
 }
 
-async function enviarEmailPara(email: string, nomeLoja?: string, cidade?: string) {
+async function enviarEmailPara(email: string, nomeLoja?: string, cidade?: string, prospectoId?: string | null) {
   const top = TOP_PRODUTOS[0]
   const idx = Math.floor(Math.random() * ASSUNTOS.length)
   const assunto = ASSUNTOS[idx](nomeLoja || '', top.nome, top.pct, cidade)
@@ -98,6 +101,7 @@ async function enviarEmailPara(email: string, nomeLoja?: string, cidade?: string
   <p style="color:#374151;margin-top:20px">Abraços,<br><strong>Paulo</strong><br>Fundador · LuvyMetrics<br><a href="https://wa.me/5521986826670" style="color:#7c3aed;font-size:14px">WhatsApp: (21) 98682-6670</a></p>
   <hr style="border:none;border-top:1px solid #f3f4f6;margin:28px 0 16px"/>
   <p style="color:#9ca3af;font-size:11px;text-align:center;line-height:1.6">Você recebeu este email porque sua loja foi encontrada no Google Maps Brasil.<br><a href="#" style="color:#9ca3af">Descadastrar</a></p>
+  ${prospectoId ? `<img src="https://luvymetrics.com.br/api/track/open?id=${prospectoId}" width="1" height="1" style="display:none" alt=""/>` : ''}
 </body></html>`
 
   const fromEmail = process.env.RESEND_FROM || 'Paulo do LuvyMetrics <no-reply@luvymetrics.com.br>'
