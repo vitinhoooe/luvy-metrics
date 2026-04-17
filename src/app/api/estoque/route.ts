@@ -16,12 +16,26 @@ async function getSupabase() {
   )
 }
 
-// GET — lista estoque do usuário autenticado
-export async function GET() {
+// GET — lista estoque ou movimentações do usuário
+export async function GET(req: NextRequest) {
   try {
     const supabase = await getSupabase()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ erro: 'Não autorizado' }, { status: 401 })
+
+    const { searchParams } = new URL(req.url)
+
+    // Se pedir movimentações
+    if (searchParams.get('movimentacoes') === 'true') {
+      const { data, error } = await supabase
+        .from('movimentacoes_estoque')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (error) return NextResponse.json([] )
+      return NextResponse.json(data || [])
+    }
 
     const { data, error } = await supabase
       .from('estoque_usuario')

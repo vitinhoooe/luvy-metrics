@@ -172,6 +172,11 @@ function ModalMov({ item, tipo, onFechar, onSalvar }: {
   )
 }
 
+type Movimentacao = {
+  id: string; produto_nome: string; tipo: string; quantidade: number
+  quantidade_anterior: number; quantidade_nova: number; observacao: string; created_at: string
+}
+
 // ─── Página principal ────────────────────────────────────────────
 export default function EstoquePage() {
   const [itens, setItens] = useState<EstoqueItem[]>([])
@@ -180,6 +185,11 @@ export default function EstoquePage() {
   const [itemEdit, setItemEdit] = useState<EstoqueItem | null>(null)
   const [mov, setMov] = useState<{ item: EstoqueItem; tipo: 'entrada' | 'saida' } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [aba, setAba] = useState<'produtos' | 'historico'>('produtos')
+  const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([])
+  const [loadingMov, setLoadingMov] = useState(false)
+  const [filtroMov, setFiltroMov] = useState<'todos' | 'entrada' | 'saida'>('todos')
+  const [buscaMov, setBuscaMov] = useState('')
 
   const buscar = useCallback(async () => {
     setLoading(true)
@@ -189,6 +199,27 @@ export default function EstoquePage() {
   }, [])
 
   useEffect(() => { buscar() }, [buscar])
+
+  async function buscarMovimentacoes() {
+    setLoadingMov(true)
+    try {
+      const res = await fetch('/api/estoque?movimentacoes=true')
+      if (res.ok) setMovimentacoes(await res.json())
+    } catch {}
+    setLoadingMov(false)
+  }
+
+  useEffect(() => { if (aba === 'historico') buscarMovimentacoes() }, [aba])
+
+  const movFiltradas = movimentacoes.filter(m => {
+    const mTipo = filtroMov === 'todos' || m.tipo === filtroMov
+    const mBusca = !buscaMov || m.produto_nome?.toLowerCase().includes(buscaMov.toLowerCase())
+    return mTipo && mBusca
+  })
+
+  const entradasMes = movimentacoes.filter(m => m.tipo === 'entrada' && new Date(m.created_at).getMonth() === new Date().getMonth()).reduce((a, m) => a + m.quantidade, 0)
+  const saidasMes = movimentacoes.filter(m => m.tipo === 'saida' && new Date(m.created_at).getMonth() === new Date().getMonth()).reduce((a, m) => a + m.quantidade, 0)
+  const movHoje = movimentacoes.filter(m => new Date(m.created_at).toDateString() === new Date().toDateString()).length
 
   async function remover(id: string) {
     if (!confirm('Remover este produto do estoque?')) return
@@ -266,27 +297,114 @@ export default function EstoquePage() {
   return (
     <>
       {/* Cabeçalho */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: TX, letterSpacing: '-0.5px', marginBottom: 4 }}>Gestão de Estoque</h1>
           <p style={{ fontSize: 14, color: MT }}>Controle suas entradas e saídas em tempo real</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button onClick={baixarTemplate} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, border: `1px solid ${BD}`, color: MT, background: 'transparent', cursor: 'pointer' }}>
-            📋 Template CSV
-          </button>
-          <label style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, border: `1px solid ${BD}`, color: MT, background: 'transparent', cursor: 'pointer' }}>
-            📥 Importar CSV
-            <input ref={fileRef} type="file" accept=".csv" onChange={importarCSV} style={{ display: 'none' }} />
-          </label>
-          <button onClick={exportarCSV} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, border: `1px solid ${BD}`, color: MT, background: 'transparent', cursor: 'pointer' }}>
-            📤 Exportar CSV
-          </button>
-          <button onClick={() => setModal('add')} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#fff', background: BTN_PRI, border: 'none', cursor: 'pointer' }}>
-            + Adicionar produto
-          </button>
-        </div>
+        {aba === 'produtos' && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={baixarTemplate} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, border: `1px solid ${BD}`, color: MT, background: '#fff', cursor: 'pointer' }}>📋 Template</button>
+            <label style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, border: `1px solid ${BD}`, color: MT, background: '#fff', cursor: 'pointer' }}>
+              📥 Importar
+              <input ref={fileRef} type="file" accept=".csv" onChange={importarCSV} style={{ display: 'none' }} />
+            </label>
+            <button onClick={exportarCSV} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, border: `1px solid ${BD}`, color: MT, background: '#fff', cursor: 'pointer' }}>📤 Exportar</button>
+            <button onClick={() => setModal('add')} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#fff', background: BTN_PRI, border: 'none', cursor: 'pointer' }}>+ Adicionar</button>
+          </div>
+        )}
       </div>
+
+      {/* Abas */}
+      <div style={{ display: 'flex', gap: 4, padding: 4, background: '#f3f4f6', borderRadius: 12, width: 'fit-content', marginBottom: 24 }}>
+        {([['produtos', '📦 Produtos'], ['historico', '📋 Histórico']] as const).map(([key, label]) => (
+          <button key={key} onClick={() => setAba(key)}
+            style={{ padding: '8px 16px', borderRadius: 8, fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: aba === key ? AC : 'transparent', color: aba === key ? '#fff' : MT }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {aba === 'historico' ? (
+        <>
+          {/* Stats histórico */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+            {[
+              { label: 'Entradas no mês', valor: entradasMes.toString(), cor: GR },
+              { label: 'Saídas no mês', valor: saidasMes.toString(), cor: RD },
+              { label: 'Movimentações hoje', valor: movHoje.toString(), cor: AC },
+            ].map(c => (
+              <div key={c.label} style={{ ...CARD, padding: '20px 24px' }}>
+                <p style={{ fontSize: 11, color: MT, fontWeight: 500, marginBottom: 8 }}>{c.label}</p>
+                <p style={{ fontSize: 24, fontWeight: 800, color: c.cor }}>{c.valor}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Filtros histórico */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 4, padding: 4, background: '#f3f4f6', borderRadius: 8 }}>
+              {([['todos', 'Todos'], ['entrada', '↑ Entradas'], ['saida', '↓ Saídas']] as const).map(([key, label]) => (
+                <button key={key} onClick={() => setFiltroMov(key)}
+                  style={{ padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: filtroMov === key ? '#fff' : 'transparent', color: filtroMov === key ? TX : MT, boxShadow: filtroMov === key ? '0 1px 2px rgba(0,0,0,0.1)' : 'none' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <input value={buscaMov} onChange={e => setBuscaMov(e.target.value)} placeholder="Buscar produto..." style={{ ...INP, width: 200 }} />
+          </div>
+
+          {/* Tabela histórico */}
+          <div style={{ ...CARD, overflow: 'hidden' }}>
+            {loadingMov ? (
+              <div style={{ padding: 60, textAlign: 'center', color: MT }}>Carregando...</div>
+            ) : movFiltradas.length === 0 ? (
+              <div style={{ padding: 60, textAlign: 'center' }}>
+                <p style={{ fontSize: 32, marginBottom: 12 }}>📋</p>
+                <p style={{ color: MT, fontSize: 14 }}>Nenhuma movimentação registrada ainda.</p>
+                <p style={{ color: MT, fontSize: 13, marginTop: 4 }}>As entradas e saídas aparecerão aqui.</p>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: '#f9fafb' }}>
+                      {['Data/Hora', 'Produto', 'Tipo', 'Qtd', 'Anterior', 'Novo', 'Observação'].map(col => (
+                        <th key={col} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, color: MT, fontWeight: 500, borderBottom: `1px solid ${BD}` }}>{col}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movFiltradas.map(m => (
+                      <tr key={m.id} style={{ borderBottom: `1px solid ${BD}` }}>
+                        <td style={{ padding: '10px 14px', fontSize: 12, color: MT }}>
+                          {new Date(m.created_at).toLocaleDateString('pt-BR')} às {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td style={{ padding: '10px 14px', fontWeight: 500, color: TX }}>{m.produto_nome}</td>
+                        <td style={{ padding: '10px 14px' }}>
+                          <span style={{
+                            background: m.tipo === 'entrada' ? '#ecfdf5' : '#fef2f2',
+                            color: m.tipo === 'entrada' ? GR : RD,
+                            border: `1px solid ${m.tipo === 'entrada' ? '#a7f3d0' : '#fecaca'}`,
+                            padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                          }}>
+                            {m.tipo === 'entrada' ? '↑ Entrada' : '↓ Saída'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 14px', fontWeight: 600, color: m.tipo === 'entrada' ? GR : RD }}>{m.tipo === 'entrada' ? '+' : '-'}{m.quantidade}</td>
+                        <td style={{ padding: '10px 14px', color: MT }}>{m.quantidade_anterior}</td>
+                        <td style={{ padding: '10px 14px', fontWeight: 500, color: TX }}>{m.quantidade_nova}</td>
+                        <td style={{ padding: '10px 14px', color: MT, fontSize: 12 }}>{m.observacao || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+      <>
 
       {/* Cards resumo — grid 3 colunas */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
@@ -376,6 +494,9 @@ export default function EstoquePage() {
           </div>
         )}
       </div>
+
+      </>
+      )}
 
       {/* Modais */}
       {modal && (
