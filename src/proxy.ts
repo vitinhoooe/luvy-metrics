@@ -36,7 +36,9 @@ export async function proxy(request: NextRequest) {
 
   const isApiRoute =
     request.nextUrl.pathname.startsWith('/api/cron') ||
-    request.nextUrl.pathname.startsWith('/api/webhook')
+    request.nextUrl.pathname.startsWith('/api/webhook') ||
+    request.nextUrl.pathname.startsWith('/api/auth') ||
+    request.nextUrl.pathname.startsWith('/api/track')
 
   // Redireciona para login se não autenticado (exceto API pública)
   if (!user && !isAuthRoute && !isApiRoute) {
