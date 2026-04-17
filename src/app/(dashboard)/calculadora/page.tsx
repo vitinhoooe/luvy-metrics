@@ -58,7 +58,7 @@ export default function CalculadoraPage() {
   const outrasTaxasVal = precoIdeal * (outrasTaxas / 100)
   const margemVal = precoIdeal * (margem / 100)
   const lucro = margemVal
-  const margemReal = precoIdeal > 0 ? ((precoIdeal - custo) / precoIdeal * 100) : 0
+  const margemReal = precoIdeal > 0 ? (lucro / precoIdeal * 100) : 0
 
   useEffect(() => { buscarHistorico() }, [])
 
