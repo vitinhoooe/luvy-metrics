@@ -369,7 +369,7 @@ export default function EstoquePage() {
                 <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#f9fafb' }}>
-                      {['Data/Hora', 'Produto', 'Tipo', 'Qtd', 'Anterior', 'Novo', 'Observação'].map(col => (
+                      {['Data e Hora', 'Produto', 'Tipo', 'Qtd', 'Antes', 'Depois', 'Obs'].map(col => (
                         <th key={col} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, color: MT, fontWeight: 500, borderBottom: `1px solid ${BD}` }}>{col}</th>
                       ))}
                     </tr>
@@ -377,10 +377,10 @@ export default function EstoquePage() {
                   <tbody>
                     {movFiltradas.map(m => (
                       <tr key={m.id} style={{ borderBottom: `1px solid ${BD}` }}>
-                        <td style={{ padding: '10px 14px', fontSize: 12, color: MT }}>
-                          {new Date(m.created_at).toLocaleDateString('pt-BR')} às {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        <td style={{ padding: '10px 14px', fontSize: 12, color: MT, whiteSpace: 'nowrap' }}>
+                          {new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' })} às {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
                         </td>
-                        <td style={{ padding: '10px 14px', fontWeight: 500, color: TX }}>{m.produto_nome}</td>
+                        <td style={{ padding: '10px 14px', fontWeight: 600, color: TX, fontSize: 13 }}>{m.produto_nome || '—'}</td>
                         <td style={{ padding: '10px 14px' }}>
                           <span style={{
                             background: m.tipo === 'entrada' ? '#ecfdf5' : '#fef2f2',
@@ -392,9 +392,9 @@ export default function EstoquePage() {
                           </span>
                         </td>
                         <td style={{ padding: '10px 14px', fontWeight: 600, color: m.tipo === 'entrada' ? GR : RD }}>{m.tipo === 'entrada' ? '+' : '-'}{m.quantidade}</td>
-                        <td style={{ padding: '10px 14px', color: MT }}>{m.quantidade_anterior}</td>
-                        <td style={{ padding: '10px 14px', fontWeight: 500, color: TX }}>{m.quantidade_nova}</td>
-                        <td style={{ padding: '10px 14px', color: MT, fontSize: 12 }}>{m.observacao || '—'}</td>
+                        <td style={{ padding: '10px 14px', color: MT }}>{m.quantidade_anterior ?? '—'} un</td>
+                        <td style={{ padding: '10px 14px', fontWeight: 500, color: TX }}>{m.quantidade_nova ?? '—'} un</td>
+                        <td style={{ padding: '10px 14px', color: MT, fontSize: 12, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.observacao || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
