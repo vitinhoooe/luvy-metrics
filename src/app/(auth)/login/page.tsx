@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 const TX = '#faf9ff'
 const MT = '#9ca3af'
@@ -17,25 +16,23 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       })
 
-      if (error) {
-        console.error('Erro magic link:', error.message)
-        alert('Erro ao enviar email: ' + error.message)
+      const data = await res.json()
+
+      if (!res.ok || data.error) {
+        alert('Erro: ' + (data.error || 'Tente novamente'))
         setLoading(false)
         return
       }
 
       setEnviado(true)
     } catch (err: any) {
-      console.error('Erro geral:', err.message)
-      alert('Erro: ' + err.message)
+      alert('Erro de conexão. Tente novamente.')
     }
 
     setLoading(false)
