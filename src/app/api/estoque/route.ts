@@ -86,19 +86,31 @@ export async function PUT(req: NextRequest) {
       // Movimentação de estoque
       const { data: produto } = await supabase
         .from('estoque_usuario')
-        .select('quantidade')
+        .select('quantidade, produto_nome')
         .eq('id', id)
         .eq('user_id', user.id)
         .single()
 
       if (!produto) return NextResponse.json({ erro: 'Produto não encontrado' }, { status: 404 })
 
+      const qtdAnterior = produto.quantidade
       const novaQtd = tipo === 'entrada'
-        ? produto.quantidade + quantidade
-        : Math.max(0, produto.quantidade - quantidade)
+        ? qtdAnterior + quantidade
+        : Math.max(0, qtdAnterior - quantidade)
+
+      if (tipo === 'saida' && quantidade > qtdAnterior) {
+        return NextResponse.json({ erro: 'Estoque insuficiente' }, { status: 400 })
+      }
 
       await supabase.from('movimentacoes_estoque').insert({
-        user_id: user.id, produto_id: id, tipo, quantidade, observacao,
+        user_id: user.id,
+        produto_id: id,
+        produto_nome: produto.produto_nome,
+        tipo,
+        quantidade,
+        quantidade_anterior: qtdAnterior,
+        quantidade_nova: novaQtd,
+        observacao: observacao || null,
       })
 
       const { data, error } = await supabase
