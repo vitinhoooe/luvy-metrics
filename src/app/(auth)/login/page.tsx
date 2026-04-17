@@ -12,15 +12,27 @@ export default function LoginPage() {
   const [enviado, setEnviado] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const [erro, setErro] = useState('')
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    const supabase = createClient()
-    await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
-    })
-    setEnviado(true)
+    setErro('')
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      })
+      if (error) {
+        setErro(error.message === 'Email rate limit exceeded' ? 'Limite de envio atingido. Aguarde 1 minuto.' : error.message)
+        setLoading(false)
+        return
+      }
+      setEnviado(true)
+    } catch {
+      setErro('Erro ao enviar. Tente novamente.')
+    }
     setLoading(false)
   }
 
@@ -81,6 +93,7 @@ export default function LoginPage() {
                   onFocus={e => (e.target.style.borderColor = '#8b5cf6')}
                   onBlur={e => (e.target.style.borderColor = BD)}
                 />
+                {erro && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 16, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px' }}>{erro}</p>}
                 <button type="submit" disabled={loading} style={{
                   width: '100%', padding: '14px',
                   background: loading ? 'rgba(139,92,246,0.5)' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
