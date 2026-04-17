@@ -25,32 +25,33 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Renova a sessão — não remover esta chamada
+  const pathname = request.nextUrl.pathname
+
+  // Rotas que NÃO precisam de autenticação — passa direto
+  const isPublicRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/api/cron') ||
+    pathname.startsWith('/api/webhook') ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/track') ||
+    pathname.startsWith('/api/leads') ||
+    pathname.startsWith('/debug') ||
+    pathname === '/'
+
+  if (isPublicRoute) {
+    return supabaseResponse
+  }
+
+  // Renova a sessão para rotas protegidas
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isAuthRoute =
-    request.nextUrl.pathname.startsWith('/login') ||
-    request.nextUrl.pathname.startsWith('/auth')
-
-  const isApiRoute =
-    request.nextUrl.pathname.startsWith('/api/cron') ||
-    request.nextUrl.pathname.startsWith('/api/webhook') ||
-    request.nextUrl.pathname.startsWith('/api/auth') ||
-    request.nextUrl.pathname.startsWith('/api/track')
-
-  // Redireciona para login se não autenticado (exceto API pública)
-  if (!user && !isAuthRoute && !isApiRoute) {
+  // Redireciona para login se não autenticado
+  if (!user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
-
-  // Redireciona para dashboard se já autenticado e tenta acessar login
-  if (user && request.nextUrl.pathname === '/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 

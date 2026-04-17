@@ -6,12 +6,12 @@ const TX = '#faf9ff'
 const MT = '#9ca3af'
 const AC = '#a78bfa'
 const BD = 'rgba(139,92,246,0.2)'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://luvymetrics.com.br'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [enviado, setEnviado] = useState(false)
   const [loading, setLoading] = useState(false)
-
   const [erro, setErro] = useState('')
 
   async function handleLogin(e: React.FormEvent) {
@@ -19,51 +19,22 @@ export default function LoginPage() {
     setLoading(true)
     setErro('')
 
-    // Verifica se variáveis existem
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      setErro('Configuração do sistema incompleta. Contate o suporte.')
-      setLoading(false)
-      return
-    }
-
     try {
-      // Testa conexão antes
-      const healthRes = await fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/auth/v1/health', {
-        headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY },
-        signal: AbortSignal.timeout(5000),
-      }).catch(() => null)
-
-      if (!healthRes || !healthRes.ok) {
-        setErro('Servidor temporariamente indisponível. Tente novamente em 1 minuto.')
-        setLoading(false)
-        return
-      }
-
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+        options: { emailRedirectTo: `${SITE_URL}/auth/callback` }
       })
 
       if (error) {
-        if (error.message.includes('rate limit')) {
-          setErro('Muitas tentativas. Aguarde 1 minuto.')
-        } else if (error.message.includes('sending')) {
-          setErro('Erro ao enviar email. O servidor de email pode estar temporariamente indisponível.')
-        } else {
-          setErro(error.message)
-        }
+        setErro(error.message)
         setLoading(false)
         return
       }
 
       setEnviado(true)
     } catch (err: any) {
-      if (err?.message?.includes('fetch') || err?.message?.includes('network') || err?.message?.includes('resolve')) {
-        setErro('Erro de conexão. Verifique sua internet e tente novamente.')
-      } else {
-        setErro('Erro inesperado: ' + (err?.message || 'Tente novamente'))
-      }
+      setErro('Erro de conexão. Verifique sua internet e tente novamente.')
     }
 
     setLoading(false)
@@ -127,7 +98,7 @@ export default function LoginPage() {
                   onBlur={e => (e.target.style.borderColor = BD)}
                 />
                 {erro && (
-                  <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 16, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', lineHeight: 1.5 }}>{erro}</p>
+                  <p style={{ color: '#f87171', fontSize: 13, marginBottom: 16, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px', lineHeight: 1.5 }}>{erro}</p>
                 )}
                 <button type="submit" disabled={loading} style={{
                   width: '100%', padding: '14px',
@@ -145,14 +116,16 @@ export default function LoginPage() {
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📧</div>
               <h2 style={{ fontSize: '20px', fontWeight: '700', color: TX, margin: '0 0 12px' }}>Link enviado!</h2>
-              <p style={{ color: MT, fontSize: '14px', lineHeight: '1.7', margin: '0 0 24px' }}>
+              <p style={{ color: MT, fontSize: '14px', lineHeight: '1.7', margin: '0 0 8px' }}>
                 Verifique sua caixa de entrada em{' '}
-                <strong style={{ color: AC }}>{email}</strong>{' '}
-                e clique no link para acessar.
+                <strong style={{ color: AC }}>{email}</strong>
               </p>
-              <button onClick={() => setEnviado(false)} style={{
+              <p style={{ color: MT, fontSize: '13px', margin: '0 0 24px' }}>
+                Pode levar até 2 minutos. Verifique também a pasta de spam.
+              </p>
+              <button onClick={() => { setEnviado(false); setErro('') }} style={{
                 background: 'transparent', border: 'none', color: MT, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit'
-              }}>Usar outro email</button>
+              }}>Tentar novamente</button>
             </div>
           )}
         </div>
