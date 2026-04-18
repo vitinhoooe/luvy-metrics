@@ -91,9 +91,7 @@ export default async function DashboardPage() {
                   <td style={{ padding: '14px 16px' }}>
                     {p.url_produto ? (
                       <a href={p.url_produto} target="_blank" rel="noopener noreferrer"
-                        style={{ color: AC, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}
-                        onMouseEnter={e => (e.target as HTMLElement).style.textDecoration = 'underline'}
-                        onMouseLeave={e => (e.target as HTMLElement).style.textDecoration = 'none'}>
+                        style={{ color: AC, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
                         {p.produto_nome} ↗
                       </a>
                     ) : <span style={{ fontWeight: 600, fontSize: 14, color: TX }}>{p.produto_nome}</span>}
