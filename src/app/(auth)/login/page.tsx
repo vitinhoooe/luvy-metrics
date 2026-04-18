@@ -180,7 +180,7 @@ export default function LoginPage() {
         }}>
           Ainda não tem conta?{' '}
           <a
-            href="https://pay.cakto.com.br/3at3fir_852772"
+            href="https://pay.cakto.com.br/wanxtpo"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: '#c840e0', textDecoration: 'none' }}

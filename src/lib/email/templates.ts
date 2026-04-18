@@ -1,4 +1,4 @@
-const CAKTO = 'https://pay.cakto.com.br/3at3fir_852772'
+const CAKTO = 'https://pay.cakto.com.br/wanxtpo'
 const SITE  = 'https://luvymetrics.com.br'
 const WPP   = process.env.NEXT_PUBLIC_WPP_SUPORTE ?? '5521999999999'
 
@@ -121,7 +121,7 @@ export function trialExpirandoTemplate(nome: string): string {
 
     <a href="${CAKTO}"
       style="display:block;text-align:center;background:#7c5cfc;color:#fff;font-size:16px;font-weight:600;padding:14px 24px;border-radius:10px;text-decoration:none;margin-bottom:16px;">
-      Assinar agora por R$47/mês →
+      Assinar agora por R$97/mês →
     </a>
 
     <p style="color:#4a4a57;font-size:12px;text-align:center;margin:0;">

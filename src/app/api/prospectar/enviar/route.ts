@@ -93,11 +93,11 @@ async function enviarEmailPara(email: string, nomeLoja?: string, cidade?: string
     <p style="margin:0;color:#374151">✓ Dados de demanda por região do Brasil</p>
   </div>
   <div style="text-align:center;margin:28px 0">
-    <a href="https://pay.cakto.com.br/3at3fir_852772" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Testar 7 dias grátis →</a>
+    <a href="https://pay.cakto.com.br/wanxtpo" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Testar 7 dias grátis →</a>
     <p style="color:#9ca3af;font-size:13px;margin:10px 0 4px">Sem cartão · Cancele quando quiser</p>
-    <p style="color:#7c3aed;font-size:15px;font-weight:700;margin:0">Apenas R$47/mês no lançamento</p>
+    <p style="color:#7c3aed;font-size:15px;font-weight:700;margin:0">Apenas R$97/mês no lançamento</p>
   </div>
-  <p style="color:#374151;line-height:1.7;border-top:1px solid #f3f4f6;padding-top:20px;font-size:14px"><strong>PS:</strong> Estamos em lançamento com preço especial de R$47/mês. As primeiras 50 lojas garantem esse preço para sempre — mesmo quando subir para R$297. Responda este email para ver os dados completos da sua região gratuitamente.</p>
+  <p style="color:#374151;line-height:1.7;border-top:1px solid #f3f4f6;padding-top:20px;font-size:14px"><strong>PS:</strong> Estamos em lançamento com preço especial de R$97/mês. As primeiras 50 lojas garantem esse preço para sempre — mesmo quando subir para R$297. Responda este email para ver os dados completos da sua região gratuitamente.</p>
   <p style="color:#374151;margin-top:20px">Abraços,<br><strong>Paulo</strong><br>Fundador · LuvyMetrics<br><a href="https://wa.me/5521986826670" style="color:#7c3aed;font-size:14px">WhatsApp: (21) 98682-6670</a></p>
   <hr style="border:none;border-top:1px solid #f3f4f6;margin:28px 0 16px"/>
   <p style="color:#9ca3af;font-size:11px;text-align:center;line-height:1.6">Você recebeu este email porque sua loja foi encontrada no Google Maps Brasil.<br><a href="#" style="color:#9ca3af">Descadastrar</a></p>

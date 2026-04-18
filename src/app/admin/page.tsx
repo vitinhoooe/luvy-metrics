@@ -199,8 +199,8 @@ export default function AdminPage() {
             { label: 'Taxa de abertura', valor: totalEnviados > 0 ? Math.round((totalAbriram / totalEnviados) * 100) + '%' : '0%', cor: '#d97706' },
             { label: 'Taxa de resposta', valor: totalEnviados > 0 ? Math.round((totalResponderam / totalEnviados) * 100) + '%' : '0%', cor: GR },
             { label: 'Taxa de conversão', valor: totalEnviados > 0 ? Math.round((totalConvertidos / totalEnviados) * 100) + '%' : '0%', cor: AC },
-            { label: 'MRR atual', valor: `R$ ${(totalConvertidos * 47).toLocaleString('pt-BR')}`, cor: GR },
-            { label: 'Projeção 100 clientes', valor: 'R$ 4.700/mês', cor: AC },
+            { label: 'MRR atual', valor: `R$ ${(totalConvertidos * 97).toLocaleString('pt-BR')}`, cor: GR },
+            { label: 'Projeção 100 clientes', valor: 'R$ 9.700/mês', cor: AC },
           ].map((m, i) => (
             <div key={i} style={{ ...CARD, padding: 28 }}>
               <div style={{ fontSize: 12, color: MT, fontWeight: 500, marginBottom: 8 }}>{m.label}</div>
