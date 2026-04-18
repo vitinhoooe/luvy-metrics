@@ -31,10 +31,12 @@ export async function POST(req: NextRequest) {
     // 1 — Cria ou reutiliza usuário no Supabase Auth
     let userId: string | undefined
 
+    const senhaTemp = Math.random().toString(36).slice(-4).toUpperCase() + Math.random().toString(36).slice(-4).toUpperCase()
+
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email,
       email_confirm: true,
-      password: Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-4),
+      password: senhaTemp,
       user_metadata: { nome, whatsapp: telefone },
     })
 
@@ -100,7 +102,13 @@ export async function POST(req: NextRequest) {
 <body style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:24px;color:#111827">
   <div style="margin-bottom:28px"><span style="font-size:24px;font-weight:800"><span style="color:#111827">Luvy</span><span style="color:#7c3aed">Metrics</span></span></div>
   <h1 style="font-size:24px;font-weight:800;color:#111827;margin:0 0 16px">Bem-vindo ao LuvyMetrics! 🎉</h1>
-  <p style="color:#374151;line-height:1.7;margin:0 0 20px">Olá ${nome || 'lojista'}! Seu acesso está ativo. Veja como começar:</p>
+  <p style="color:#374151;line-height:1.7;margin:0 0 20px">Olá ${nome || 'lojista'}! Seu acesso está ativo.</p>
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:0 0 24px">
+    <p style="margin:0 0 8px;font-weight:700;color:#059669;font-size:15px">Seus dados de acesso:</p>
+    <p style="margin:0 0 4px;color:#374151;font-size:14px"><strong>Email:</strong> ${email}</p>
+    <p style="margin:0 0 4px;color:#374151;font-size:14px"><strong>Senha temporária:</strong> ${senhaTemp}</p>
+    <p style="margin:0;color:#6b7280;font-size:12px">Recomendamos trocar a senha após o primeiro acesso.</p>
+  </div>
   <div style="background:#f5f3ff;border-radius:12px;padding:24px;margin:0 0 24px">
     <p style="margin:0 0 16px;font-weight:700;color:#7c3aed;font-size:16px">3 passos para seu primeiro insight:</p>
     <p style="margin:0 0 10px;color:#374151">1️⃣ Acesse o dashboard e veja as tendências de hoje</p>

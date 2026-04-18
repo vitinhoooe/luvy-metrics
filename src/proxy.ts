@@ -30,6 +30,8 @@ export async function proxy(request: NextRequest) {
   // Rotas que NÃO precisam de autenticação — passa direto
   const isPublicRoute =
     pathname.startsWith('/login') ||
+    pathname.startsWith('/recuperar-senha') ||
+    pathname.startsWith('/nova-senha') ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api/cron') ||
     pathname.startsWith('/api/webhook') ||
