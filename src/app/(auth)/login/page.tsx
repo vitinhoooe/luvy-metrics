@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 const TX = '#faf9ff'
@@ -9,12 +10,42 @@ const BD = 'rgba(139,92,246,0.2)'
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://luvymetrics.com.br'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
   const [enviado, setEnviado] = useState(false)
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+  const [modo, setModo] = useState<'senha' | 'magic'>('senha')
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleSenha(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setErro('')
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
+
+      if (error) {
+        if (error.message.includes('Invalid login')) {
+          setErro('Email ou senha incorretos.')
+        } else {
+          setErro(error.message)
+        }
+        setLoading(false)
+        return
+      }
+
+      router.push('/dashboard')
+    } catch {
+      setErro('Erro de conexão. Verifique sua internet.')
+    }
+
+    setLoading(false)
+  }
+
+  async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setErro('')
@@ -33,11 +64,21 @@ export default function LoginPage() {
       }
 
       setEnviado(true)
-    } catch (err: any) {
-      setErro('Erro de conexão. Verifique sua internet e tente novamente.')
+    } catch {
+      setErro('Erro de conexão. Verifique sua internet.')
     }
 
     setLoading(false)
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '14px 16px',
+    background: 'rgba(255,255,255,0.05)',
+    border: `1px solid ${BD}`,
+    borderRadius: '10px', color: TX,
+    fontSize: '15px', outline: 'none',
+    marginBottom: '16px', fontFamily: 'inherit',
+    boxSizing: 'border-box',
   }
 
   return (
@@ -75,31 +116,50 @@ export default function LoginPage() {
               <h2 style={{ fontSize: '20px', fontWeight: '700', color: TX, margin: '0 0 8px' }}>
                 Entrar na plataforma
               </h2>
-              <p style={{ color: MT, fontSize: '14px', margin: '0 0 28px', lineHeight: '1.6' }}>
-                Enviaremos um link mágico para seu email. Sem senha, sem complicação.
-              </p>
-              <form onSubmit={handleLogin}>
+
+              {/* Toggle modo */}
+              <div style={{ display: 'flex', gap: 4, padding: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 10, marginBottom: 24 }}>
+                <button type="button" onClick={() => { setModo('senha'); setErro('') }}
+                  style={{ flex: 1, padding: '8px', borderRadius: 8, fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: modo === 'senha' ? '#7c3aed' : 'transparent', color: modo === 'senha' ? '#fff' : MT }}>
+                  🔑 Email e senha
+                </button>
+                <button type="button" onClick={() => { setModo('magic'); setErro('') }}
+                  style={{ flex: 1, padding: '8px', borderRadius: 8, fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: modo === 'magic' ? '#7c3aed' : 'transparent', color: modo === 'magic' ? '#fff' : MT }}>
+                  ✨ Link mágico
+                </button>
+              </div>
+
+              <form onSubmit={modo === 'senha' ? handleSenha : handleMagicLink}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: MT, marginBottom: '8px' }}>
-                  Seu email
+                  Email
                 </label>
                 <input
                   type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="seu@email.com" required
-                  style={{
-                    width: '100%', padding: '14px 16px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: `1px solid ${BD}`,
-                    borderRadius: '10px', color: TX,
-                    fontSize: '15px', outline: 'none',
-                    marginBottom: '20px', fontFamily: 'inherit',
-                    boxSizing: 'border-box'
-                  }}
+                  style={inputStyle}
                   onFocus={e => (e.target.style.borderColor = '#8b5cf6')}
                   onBlur={e => (e.target.style.borderColor = BD)}
                 />
+
+                {modo === 'senha' && (
+                  <>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: MT, marginBottom: '8px' }}>
+                      Senha
+                    </label>
+                    <input
+                      type="password" value={senha} onChange={e => setSenha(e.target.value)}
+                      placeholder="Sua senha" required
+                      style={inputStyle}
+                      onFocus={e => (e.target.style.borderColor = '#8b5cf6')}
+                      onBlur={e => (e.target.style.borderColor = BD)}
+                    />
+                  </>
+                )}
+
                 {erro && (
                   <p style={{ color: '#f87171', fontSize: 13, marginBottom: 16, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px', lineHeight: 1.5 }}>{erro}</p>
                 )}
+
                 <button type="submit" disabled={loading} style={{
                   width: '100%', padding: '14px',
                   background: loading ? 'rgba(139,92,246,0.5)' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
@@ -108,7 +168,7 @@ export default function LoginPage() {
                   cursor: loading ? 'not-allowed' : 'pointer',
                   fontFamily: 'inherit'
                 }}>
-                  {loading ? 'Enviando...' : 'Entrar com link mágico →'}
+                  {loading ? 'Entrando...' : modo === 'senha' ? 'Entrar →' : 'Enviar link mágico →'}
                 </button>
               </form>
             </>
