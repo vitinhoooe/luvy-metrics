@@ -156,6 +156,20 @@ export default function LoginPage() {
                   </>
                 )}
 
+                {modo === 'senha' && (
+                  <button type="button" onClick={async () => {
+                    if (!email) { setErro('Digite seu email primeiro'); return }
+                    setLoading(true); setErro('')
+                    const supabase = createClient()
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${SITE_URL}/auth/callback?next=/configuracoes` })
+                    setLoading(false)
+                    if (error) setErro(error.message)
+                    else setErro('✅ Link para criar/redefinir senha enviado para seu email!')
+                  }} style={{ background: 'none', border: 'none', color: AC, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 16, display: 'block' }}>
+                    Primeiro acesso? Criar senha →
+                  </button>
+                )}
+
                 {erro && (
                   <p style={{ color: '#f87171', fontSize: 13, marginBottom: 16, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px', lineHeight: 1.5 }}>{erro}</p>
                 )}
