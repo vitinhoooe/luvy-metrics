@@ -9,7 +9,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect('/login')
 
   const { data: perfil } = await supabase
-    .from('perfis').select('nome, nome_loja, trial_expira_em, plano').eq('id', user.id).single()
+    .from('perfis').select('nome, nome_loja, trial_expira_em, plano, ativo').eq('id', user.id).single()
+
+  // Admin sempre tem acesso
+  const ADMIN_EMAIL = 'paulobernardobtt@gmail.com'
+  if (user.email !== ADMIN_EMAIL) {
+    if (perfil?.plano === 'cancelado' || perfil?.ativo === false) {
+      redirect('/reativar')
+    }
+    if (perfil?.plano === 'trial' && perfil?.trial_expira_em) {
+      if (new Date(perfil.trial_expira_em) < new Date()) {
+        redirect('/assinar')
+      }
+    }
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f7ff', fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#111827' }}>

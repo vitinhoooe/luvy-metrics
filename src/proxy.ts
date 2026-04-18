@@ -32,6 +32,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/recuperar-senha') ||
     pathname.startsWith('/nova-senha') ||
+    pathname.startsWith('/reativar') ||
+    pathname.startsWith('/assinar') ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api/cron') ||
     pathname.startsWith('/api/webhook') ||

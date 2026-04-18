@@ -8,8 +8,28 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     console.log('Webhook Cakto recebido:', JSON.stringify(body, null, 2))
 
-    // Aceita purchase.approved ou payment.approved
     const evento = body.event ?? body.type ?? ''
+    const ADMIN_EMAIL = 'paulobernardobtt@gmail.com'
+
+    // ─── CANCELAMENTO / REEMBOLSO ────────────────────────────────
+    if (['subscription.canceled', 'purchase.refunded', 'subscription.expired'].includes(evento)) {
+      const email = (body.customer ?? body.buyer)?.email as string | undefined
+      if (!email || email === ADMIN_EMAIL) return NextResponse.json({ ok: true })
+
+      console.log('Cancelamento para:', email)
+      const supabase = createServiceClient()
+      const { data: users } = await supabase.auth.admin.listUsers()
+      const user = users?.users?.find(u => u.email === email)
+
+      if (user) {
+        await supabase.from('perfis').update({ plano: 'cancelado', ativo: false }).eq('user_id', user.id)
+        console.log('Acesso cancelado para:', email)
+      }
+
+      return NextResponse.json({ success: true })
+    }
+
+    // ─── COMPRA APROVADA ─────────────────────────────────────────
     if (!['purchase.approved', 'payment.approved', 'sale.approved'].includes(evento)) {
       console.log('Evento ignorado:', evento)
       return NextResponse.json({ ok: true, ignorado: true })
