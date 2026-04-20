@@ -31,9 +31,9 @@ export async function GET() {
     const resend = new Resend(process.env.RESEND_API_KEY)
     const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY
 
-    // Rotaciona 3 cidades por dia
+    // 1 cidade por execução (rápido, sem timeout)
     const hoje = new Date().getDate()
-    const cidadesHoje = CIDADES.slice((hoje * 3) % CIDADES.length, ((hoje * 3) % CIDADES.length) + 3)
+    const cidadesHoje = [CIDADES[hoje % CIDADES.length]]
 
     let totalLojas = 0
     let totalComEmail = 0
@@ -52,7 +52,7 @@ export async function GET() {
         const data = await res.json()
         if (data.status !== 'OK') continue
 
-        const places = (data.results || []).slice(0, 15)
+        const places = (data.results || []).slice(0, 10)
         totalLojas += places.length
 
         for (const place of places) {
@@ -68,15 +68,13 @@ export async function GET() {
             }
           } catch {}
 
-          // Tenta extrair email do site
+          // Gera email provável a partir do domínio do site
           let email: string | null = null
           if (website) {
             try {
-              const sRes = await fetch(website, { signal: AbortSignal.timeout(3000), headers: { 'User-Agent': 'Mozilla/5.0' } })
-              if (sRes.ok) {
-                const html = await sRes.text()
-                const m = html.match(/[\w.+-]+@[\w.-]+\.\w{2,}/g)
-                if (m) email = m.find(e => !e.includes('example') && !e.includes('sentry') && !e.includes('wix')) || null
+              const domain = new URL(website).hostname.replace('www.', '')
+              if (!domain.includes('facebook') && !domain.includes('instagram') && !domain.includes('google')) {
+                email = `contato@${domain}`
               }
             } catch {}
           }
