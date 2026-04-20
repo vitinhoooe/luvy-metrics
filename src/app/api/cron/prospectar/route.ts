@@ -73,15 +73,21 @@ export async function GET() {
           if (website) {
             try {
               const domain = new URL(website).hostname.replace('www.', '')
-              if (!domain.includes('facebook') && !domain.includes('instagram') && !domain.includes('google')) {
+              const blocked = ['facebook', 'instagram', 'google', 'youtube', 'twitter', 'tiktok', 'linktree', 'shopee', 'mercadolivre']
+              if (!blocked.some(b => domain.includes(b)) && domain.includes('.')) {
                 email = `contato@${domain}`
               }
             } catch {}
           }
+          // Filtra emails inválidos
+          if (email && (email.includes('.png') || email.includes('.jpg') || email.includes('example') || email.includes('meu@') || email.includes('test@') || email.length < 8)) {
+            email = null
+          }
 
-          // Salva prospecto no banco
+          // Salva prospecto no banco (dedup por place_id E email)
           const { data: existing } = await supabase.from('prospectos').select('id').eq('place_id', place.place_id).maybeSingle()
-          if (!existing) {
+          const { data: emailExisting } = email ? await supabase.from('prospectos').select('id').eq('email', email).maybeSingle() : { data: null }
+          if (!existing && !emailExisting) {
             await supabase.from('prospectos').insert({
               nome_loja: place.name,
               cidade,
@@ -94,7 +100,7 @@ export async function GET() {
           }
 
           // Envia email se tem
-          if (email && !existing) {
+          if (email && !existing && !emailExisting) {
             try {
               const assunto = ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)](place.name, cidade)
               const lista = TOP_PRODUTOS.map(p => `<li><strong>${p.nome}</strong> — +${p.pct}% (${p.vendas} vendas/dia · R$${p.preco})</li>`).join('')
