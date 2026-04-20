@@ -86,16 +86,33 @@ export async function GET() {
               if (dRes.ok) website = ((await dRes.json()).result?.website) || null
             } catch {}
 
-            // Gera email do domínio
+            // Extrai email real do site (múltiplas páginas)
             let email: string | null = null
             if (website) {
-              try {
-                const domain = new URL(website).hostname.replace('www.', '')
-                const blocked = ['facebook', 'instagram', 'google', 'youtube', 'twitter', 'tiktok', 'linktree', 'shopee', 'mercadolivre', 'whatsapp', 'wa.me']
-                if (!blocked.some(b => domain.includes(b)) && domain.includes('.') && domain.length > 5) {
-                  email = `contato@${domain}`
+              const domain = (() => { try { return new URL(website).hostname.replace('www.', '') } catch { return '' } })()
+              const blocked = ['facebook', 'instagram', 'google', 'youtube', 'twitter', 'tiktok', 'linktree', 'shopee', 'mercadolivre', 'whatsapp', 'wa.me', 'bit.ly']
+              if (blocked.some(b => domain.includes(b)) || !domain.includes('.') || domain.length < 5) {
+                // Skip redes sociais
+              } else {
+                const base = website.replace(/\/$/, '')
+                const paginas = [base, base + '/contato', base + '/fale-conosco', base + '/sobre', base + '/contact', base + '/sobre-nos']
+                for (const pg of paginas) {
+                  if (email) break
+                  try {
+                    const r = await fetch(pg, { signal: AbortSignal.timeout(2500), headers: { 'User-Agent': 'Mozilla/5.0' } })
+                    if (!r.ok) continue
+                    const html = await r.text()
+                    const matches = html.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/g)
+                    if (matches) {
+                      const lixo = ['example', 'teste', 'domain', 'email', 'sentry', 'wix', '.png', '.jpg', '.gif', '.svg', 'noreply', 'no-reply', 'nuvem', '2x.']
+                      const valido = matches.find(e => !lixo.some(l => e.toLowerCase().includes(l)) && e.length >= 8 && e.length <= 60)
+                      if (valido) email = valido.toLowerCase()
+                    }
+                  } catch {}
                 }
-              } catch {}
+                // Fallback: contato@dominio se não achou email real
+                if (!email) email = `contato@${domain}`
+              }
             }
             if (email && (email.includes('.png') || email.includes('.jpg') || email.includes('example') || email.includes('meu@') || email.includes('test@') || email.length < 8)) {
               email = null
