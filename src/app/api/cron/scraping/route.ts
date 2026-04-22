@@ -39,7 +39,7 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url)
     const pagina = parseInt(searchParams.get('pagina') || '1')
-    const porPagina = 6 // cidades por execução
+    const porPagina = 2 // rápido para não dar timeout
 
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
@@ -56,7 +56,7 @@ export async function GET(req: Request) {
     let encontrados = 0, salvos = 0, emailsReais = 0
 
     for (const cidade of cidadesHoje) {
-      for (const termo of TERMOS.slice(0, 2)) {
+      for (const termo of TERMOS.slice(0, 1)) {
         try {
           const q = encodeURIComponent(`${termo} em ${cidade}`)
           const res = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${q}&language=pt-BR&key=${GOOGLE_KEY}`, { signal: AbortSignal.timeout(6000) })
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
           const data = await res.json()
           if (data.status !== 'OK') continue
 
-          for (const place of (data.results || []).slice(0, 15)) {
+          for (const place of (data.results || []).slice(0, 8)) {
             if (placesVistos.has(place.place_id)) continue
             placesVistos.add(place.place_id)
             encontrados++
@@ -86,22 +86,16 @@ export async function GET(req: Request) {
               const blocked = ['facebook','instagram','google','youtube','twitter','tiktok','linktree','shopee','mercadolivre','whatsapp','wa.me','bit.ly']
               const domain = (() => { try { return new URL(website).hostname.replace('www.', '') } catch { return '' } })()
 
-              if (!blocked.some(b => domain.includes(b)) && domain.includes('.')) {
-                const paginas = [base, base + '/contato', base + '/fale-conosco', base + '/contact', base + '/sobre']
-                for (const pg of paginas) {
-                  if (email) break
-                  try {
-                    const r = await fetch(pg, { signal: AbortSignal.timeout(2500), headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } })
-                    if (!r.ok) continue
+              if (!blocked.some(b => domain.includes(b)) && domain.includes('.') && domain.length > 5) {
+                // Tenta homepage rápido
+                try {
+                  const r = await fetch(base, { signal: AbortSignal.timeout(2000), headers: { 'User-Agent': 'Mozilla/5.0' } })
+                  if (r.ok) {
                     const html = await r.text()
                     const found = extrairEmails(html)
-                    if (found.length > 0) {
-                      email = found[0].toLowerCase()
-                      emailsReais++
-                    }
-                  } catch {}
-                }
-                // Fallback: contato@dominio
+                    if (found.length > 0) { email = found[0].toLowerCase(); emailsReais++ }
+                  }
+                } catch {}
                 if (!email) email = `contato@${domain}`
               }
             }
