@@ -50,23 +50,25 @@ export async function GET() {
     const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY
     if (!GOOGLE_KEY) return NextResponse.json({ error: 'GOOGLE_PLACES_API_KEY missing' }, { status: 500 })
 
-    // Pega 2 cidades por execução (rotaciona pelo horário)
-    const now = new Date()
-    const idx = (now.getDate() * 4 + now.getHours()) % CIDADES.length
-    const cidadesHoje = [CIDADES[idx], CIDADES[(idx + 1) % CIDADES.length]]
-    // Pega 2 termos por execução
-    const termoIdx = now.getHours() % TERMOS.length
-    const termosHoje = [TERMOS[termoIdx], TERMOS[(termoIdx + 1) % TERMOS.length]]
+    // Descobre quais cidades já foram cobertas
+    const { data: jaEnviados } = await supabase.from('prospectos').select('email,cidade').not('email', 'is', null)
+    const emailsJaEnviados = new Set((jaEnviados || []).map((p: any) => p.email?.toLowerCase()))
+    const cidadesJaCobertas = new Set((jaEnviados || []).map((p: any) => p.cidade))
+
+    // Prioriza cidades NÃO cobertas, depois repete com termos novos
+    const cidadesNaoCobertas = CIDADES.filter(c => !cidadesJaCobertas.has(c))
+    const cidadesParaBuscar = cidadesNaoCobertas.length > 0 ? cidadesNaoCobertas.slice(0, 5) : CIDADES.slice(0, 3)
+
+    // Usa TODOS os termos para cidades novas, 2 termos para repetidas
+    const termosParaBuscar = cidadesNaoCobertas.length > 0 ? TERMOS.slice(0, 4) : TERMOS.slice(0, 2)
+
+    console.log(`Cidades cobertas: ${cidadesJaCobertas.size}/${CIDADES.length} | Buscando: ${cidadesParaBuscar.length} cidades × ${termosParaBuscar.length} termos`)
 
     let totalLojas = 0, totalEnviados = 0, totalErros = 0
     const emailsEnviados = new Set<string>()
 
-    // Busca emails já enviados para não duplicar
-    const { data: jaEnviados } = await supabase.from('prospectos').select('email').not('email', 'is', null)
-    const emailsJaEnviados = new Set((jaEnviados || []).map((p: any) => p.email?.toLowerCase()))
-
-    for (const cidade of cidadesHoje) {
-      for (const termo of termosHoje) {
+    for (const cidade of cidadesParaBuscar) {
+      for (const termo of termosParaBuscar) {
         try {
           const q = encodeURIComponent(`${termo} em ${cidade}`)
           const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${q}&language=pt-BR&key=${GOOGLE_KEY}`
@@ -142,11 +144,13 @@ export async function GET() {
       }
     }
 
-    console.log(`Prospecção: ${cidadesHoje.join('+')} × ${termosHoje.join('+')} | Lojas: ${totalLojas} | Emails: ${totalEnviados}`)
+    console.log(`Prospecção: ${cidadesParaBuscar.length} cidades × ${termosParaBuscar.length} termos | Lojas: ${totalLojas} | Emails: ${totalEnviados}`)
 
     return NextResponse.json({
-      cidades: cidadesHoje, termos: termosHoje,
+      cidades: cidadesParaBuscar, termos_usados: termosParaBuscar.length,
+      cidades_cobertas: cidadesJaCobertas.size, cidades_restantes: cidadesNaoCobertas.length,
       lojas_encontradas: totalLojas, emails_enviados: totalEnviados, erros: totalErros,
+      total_prospectos: emailsJaEnviados.size + totalEnviados,
     })
   } catch (error: any) {
     console.error('Erro prospectar:', error)
