@@ -4,43 +4,39 @@ import { createClient } from '@supabase/supabase-js'
 
 export const maxDuration = 55
 
-const CIDADES = [
-  'São Paulo SP', 'Rio de Janeiro RJ', 'Belo Horizonte MG', 'Salvador BA',
-  'Fortaleza CE', 'Curitiba PR', 'Recife PE', 'Porto Alegre RS',
-  'Goiânia GO', 'Florianópolis SC', 'Campinas SP', 'Vitória ES',
-  'Natal RN', 'Santos SP', 'Niterói RJ', 'Uberlândia MG',
-  'Joinville SC', 'Londrina PR', 'Maringá PR', 'São Luís MA',
-  'Brasília DF', 'Manaus AM', 'Belém PA', 'Maceió AL',
-  'Campo Grande MS', 'Teresina PI', 'João Pessoa PB', 'Aracaju SE',
-  'Cuiabá MT', 'Ribeirão Preto SP', 'Sorocaba SP', 'Guarulhos SP',
-  'São Bernardo do Campo SP', 'Osasco SP', 'Santo André SP',
-  'Juiz de Fora MG', 'Feira de Santana BA', 'Ananindeua PA',
-  'Aparecida de Goiânia GO', 'Serra ES',
-]
-
-const TERMOS = [
-  'sex shop', 'loja lingerie sensual', 'loja produtos adultos',
-  'boutique sensual erótica', 'loja íntima adulto', 'sex shop atacado',
-  'lingerie sensual feminina loja', 'erotika sex shop',
+const TODAS_CIDADES = [
+  'São Paulo SP','Rio de Janeiro RJ','Belo Horizonte MG','Salvador BA','Fortaleza CE','Curitiba PR','Recife PE','Porto Alegre RS',
+  'Goiânia GO','Florianópolis SC','Campinas SP','Vitória ES','Natal RN','Santos SP','Niterói RJ','Uberlândia MG',
+  'Joinville SC','Londrina PR','Maringá PR','São Luís MA','Brasília DF','Manaus AM','Belém PA','Maceió AL',
+  'Campo Grande MS','Teresina PI','João Pessoa PB','Aracaju SE','Cuiabá MT','Ribeirão Preto SP',
+  'Piracicaba SP','Bauru SP','São José dos Campos SP','Jundiaí SP','Taubaté SP','Franca SP','Marília SP',
+  'Pelotas RS','Caxias do Sul RS','Santa Maria RS','Passo Fundo RS','Novo Hamburgo RS',
+  'Blumenau SC','Chapecó SC','Criciúma SC','Itajaí SC','Balneário Camboriú SC',
+  'Cascavel PR','Ponta Grossa PR','Foz do Iguaçu PR',
+  'Montes Claros MG','Governador Valadares MG','Uberaba MG','Ipatinga MG',
+  'Petrolina PE','Caruaru PE','Mossoró RN',
+  'Macaé RJ','Volta Redonda RJ','Campos dos Goytacazes RJ','Petrópolis RJ',
+  'Anápolis GO','Rio Verde GO','Rio Branco AC','Porto Velho RO','Palmas TO',
+  'Vitória da Conquista BA','Feira de Santana BA','Sobral CE','Juazeiro do Norte CE',
+  'Marabá PA','Santarém PA','Dourados MS','Rondonópolis MT','Sinop MT',
+  'Araraquara SP','São Carlos SP','Presidente Prudente SP','Sorocaba SP','Guarulhos SP',
 ]
 
 const TOP = { nome: 'Vibrador Sugador Rose Recarregável', pct: 87, vendas: 920, preco: '129,90' }
-const LISTA_HTML = [
+const LISTA = [
   ['Gel Excitante Feminino Tesão de Vaca', 72, 1300, '24,90'],
   ['Lubrificante Íntimo K-Med 200g', 65, 1600, '29,90'],
   ['Calcinha Fio Dental Renda Preta', 58, 1600, '19,90'],
-  ['Preservativo Retardante Jontex 12un', 54, 1800, '29,90'],
 ].map(([n, p, v, pr]) => `<li><strong>${n}</strong> — +${p}% (${v} vendas/dia · R$${pr})</li>`).join('')
 
 const ASSUNTOS = [
-  (loja: string, cidade: string) => `${loja} — produto subiu +87% essa semana no ML`,
-  (_l: string, cidade: string) => `Dado exclusivo para sex shops em ${cidade}: o que está bombando`,
-  (loja: string) => `Vi uma oportunidade para ${loja} essa semana`,
-  (_l: string, cidade: string) => `Sex shops em ${cidade} estão lucrando com esse produto`,
+  (l: string) => `${l} — produto subiu +87% essa semana no ML`,
+  (l: string) => `Vi uma oportunidade para ${l} essa semana`,
+  (l: string) => `Dado exclusivo: o que está bombando para ${l}`,
 ]
 
-function emailHtml(nome: string, cidade: string) {
-  return `<div style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:24px;color:#111827"><div style="margin-bottom:24px"><span style="font-size:22px;font-weight:800"><span style="color:#111827">Luvy</span><span style="color:#7c3aed">Metrics</span></span></div><p style="font-size:16px;margin:0 0 16px">Olá, <strong>${nome}</strong>!</p><p style="color:#374151;line-height:1.7;margin:0 0 20px">Monitorando o mercado adulto essa semana, vi algo importante para sex shops em <strong>${cidade}</strong>:</p><div style="background:#f5f3ff;border-left:4px solid #7c3aed;padding:20px;border-radius:0 8px 8px 0;margin:0 0 20px"><p style="margin:0 0 8px;font-weight:700;color:#7c3aed;font-size:16px">🔥 ${TOP.nome} subiu +${TOP.pct}% essa semana</p><p style="margin:0;color:#374151;font-size:14px">${TOP.vendas} vendas por dia · R$${TOP.preco} preço médio</p></div><p style="color:#374151;font-weight:600;margin:0 0 8px">Outros produtos em alta:</p><ul style="color:#374151;line-height:2.2;margin:0 0 24px;padding-left:20px">${LISTA_HTML}</ul><p style="color:#374151;line-height:1.7;margin:0 0 20px">Criamos uma plataforma que entrega esses dados <strong>todo dia</strong> para donos de sex shop — para você saber o que comprar <strong>antes de qualquer concorrente</strong>.</p><div style="text-align:center;margin:28px 0"><a href="https://pay.cakto.com.br/wanxtpo" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Testar 7 dias grátis →</a><p style="color:#9ca3af;font-size:13px;margin:10px 0 4px">Sem cartão · Cancele quando quiser</p><p style="color:#7c3aed;font-size:15px;font-weight:700;margin:0">Apenas R$97/mês</p></div><p style="color:#374151;line-height:1.7;border-top:1px solid #f3f4f6;padding-top:20px;font-size:14px"><strong>PS:</strong> Estamos em lançamento. As primeiras 50 lojas garantem R$97/mês para sempre — mesmo quando subir para R$297.</p><p style="color:#374151;margin-top:20px">Abraços,<br><strong>Paulo</strong><br>Fundador · LuvyMetrics<br><a href="https://wa.me/5521986826670" style="color:#7c3aed;font-size:14px">WhatsApp: (21) 98682-6670</a></p></div>`
+function emailHtml(nome: string, cidade?: string) {
+  return `<div style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:24px;color:#111827"><div style="margin-bottom:24px"><span style="font-size:22px;font-weight:800"><span style="color:#111827">Luvy</span><span style="color:#7c3aed">Metrics</span></span></div><p style="font-size:16px;margin:0 0 16px">Olá, <strong>${nome}</strong>!</p><p style="color:#374151;line-height:1.7;margin:0 0 20px">Monitorando o mercado adulto essa semana, vi algo importante${cidade ? ' para sex shops em <strong>' + cidade + '</strong>' : ''}:</p><div style="background:#f5f3ff;border-left:4px solid #7c3aed;padding:20px;border-radius:0 8px 8px 0;margin:0 0 20px"><p style="margin:0 0 8px;font-weight:700;color:#7c3aed;font-size:16px">🔥 ${TOP.nome} subiu +${TOP.pct}% essa semana</p><p style="margin:0;color:#374151;font-size:14px">${TOP.vendas} vendas por dia · R$${TOP.preco} preço médio</p></div><p style="color:#374151;font-weight:600;margin:0 0 8px">Outros em alta:</p><ul style="color:#374151;line-height:2.2;margin:0 0 24px;padding-left:20px">${LISTA}</ul><div style="text-align:center;margin:28px 0"><a href="https://pay.cakto.com.br/wanxtpo" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Testar 7 dias grátis →</a><p style="color:#7c3aed;font-size:15px;font-weight:700;margin:10px 0 0">R$97/mês</p></div><p style="color:#374151;margin-top:20px">Abraços,<br><strong>Paulo</strong><br>LuvyMetrics<br><a href="https://wa.me/5521986826670" style="color:#7c3aed">WhatsApp: (21) 98682-6670</a></p></div>`
 }
 
 export async function GET() {
@@ -48,109 +44,101 @@ export async function GET() {
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     const resend = new Resend(process.env.RESEND_API_KEY)
     const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY
-    if (!GOOGLE_KEY) return NextResponse.json({ error: 'GOOGLE_PLACES_API_KEY missing' }, { status: 500 })
 
-    // Descobre quais cidades já foram cobertas
-    const { data: jaEnviados } = await supabase.from('prospectos').select('email,cidade').not('email', 'is', null)
-    const emailsJaEnviados = new Set((jaEnviados || []).map((p: any) => p.email?.toLowerCase()))
-    const cidadesJaCobertas = new Set((jaEnviados || []).map((p: any) => p.cidade))
+    // Emails já existentes
+    const { data: existentes } = await supabase.from('prospectos').select('email,place_id').not('email', 'is', null)
+    const emailsVistos = new Set((existentes || []).map((p: any) => p.email?.toLowerCase()))
+    const placesVistos = new Set((existentes || []).filter((p: any) => p.place_id).map((p: any) => p.place_id))
 
-    // Prioriza cidades NÃO cobertas, depois repete com termos novos
-    const cidadesNaoCobertas = CIDADES.filter(c => !cidadesJaCobertas.has(c))
-    const cidadesParaBuscar = cidadesNaoCobertas.length > 0 ? cidadesNaoCobertas.slice(0, 5) : CIDADES.slice(0, 3)
+    // ════════════════════════════════════
+    // FASE 1: BUSCA 2 cidades novas (~15s)
+    // ════════════════════════════════════
+    let buscados = 0, novosSalvos = 0
+    if (GOOGLE_KEY) {
+      // Descobre quais cidades já foram cobertas
+      const { data: cidadesData } = await supabase.from('prospectos').select('cidade')
+      const cidadesCobertas = new Set((cidadesData || []).map((c: any) => c.cidade))
+      const cidadesNovas = TODAS_CIDADES.filter(c => !cidadesCobertas.has(c)).slice(0, 2)
+      const cidadesParaBuscar = cidadesNovas.length > 0 ? cidadesNovas : TODAS_CIDADES.slice(0, 2)
 
-    // Usa TODOS os termos para cidades novas, 2 termos para repetidas
-    const termosParaBuscar = cidadesNaoCobertas.length > 0 ? TERMOS.slice(0, 4) : TERMOS.slice(0, 2)
-
-    console.log(`Cidades cobertas: ${cidadesJaCobertas.size}/${CIDADES.length} | Buscando: ${cidadesParaBuscar.length} cidades × ${termosParaBuscar.length} termos`)
-
-    let totalLojas = 0, totalEnviados = 0, totalErros = 0
-    const emailsEnviados = new Set<string>()
-
-    for (const cidade of cidadesParaBuscar) {
-      for (const termo of termosParaBuscar) {
+      for (const cidade of cidadesParaBuscar) {
         try {
-          const q = encodeURIComponent(`${termo} em ${cidade}`)
-          const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${q}&language=pt-BR&key=${GOOGLE_KEY}`
-          const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+          const q = encodeURIComponent(`sex shop em ${cidade}`)
+          const res = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${q}&language=pt-BR&key=${GOOGLE_KEY}`, { signal: AbortSignal.timeout(6000) })
           if (!res.ok) continue
           const data = await res.json()
           if (data.status !== 'OK') continue
 
-          for (const place of (data.results || []).slice(0, 20)) {
-            totalLojas++
+          for (const place of (data.results || []).slice(0, 8)) {
+            if (placesVistos.has(place.place_id)) continue
+            placesVistos.add(place.place_id)
+            buscados++
 
-            // Busca website
             let website: string | null = null
             try {
-              const dUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=website&key=${GOOGLE_KEY}`
-              const dRes = await fetch(dUrl, { signal: AbortSignal.timeout(4000) })
+              const dRes = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=website&key=${GOOGLE_KEY}`, { signal: AbortSignal.timeout(3000) })
               if (dRes.ok) website = ((await dRes.json()).result?.website) || null
             } catch {}
 
-            // Extrai email real do site (múltiplas páginas)
             let email: string | null = null
             if (website) {
               const domain = (() => { try { return new URL(website).hostname.replace('www.', '') } catch { return '' } })()
-              const blocked = ['facebook', 'instagram', 'google', 'youtube', 'twitter', 'tiktok', 'linktree', 'shopee', 'mercadolivre', 'whatsapp', 'wa.me', 'bit.ly']
-              if (blocked.some(b => domain.includes(b)) || !domain.includes('.') || domain.length < 5) {
-                // Skip redes sociais
-              } else {
-                const base = website.replace(/\/$/, '')
-                const paginas = [base, base + '/contato', base + '/fale-conosco', base + '/sobre', base + '/contact', base + '/sobre-nos']
-                for (const pg of paginas) {
-                  if (email) break
-                  try {
-                    const r = await fetch(pg, { signal: AbortSignal.timeout(2500), headers: { 'User-Agent': 'Mozilla/5.0' } })
-                    if (!r.ok) continue
+              const blocked = ['facebook','instagram','google','youtube','twitter','tiktok','linktree','shopee','mercadolivre','whatsapp','wa.me']
+              if (!blocked.some(b => domain.includes(b)) && domain.includes('.') && domain.length > 5) {
+                try {
+                  const r = await fetch(website, { signal: AbortSignal.timeout(2000), headers: { 'User-Agent': 'Mozilla/5.0' } })
+                  if (r.ok) {
                     const html = await r.text()
-                    const matches = html.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/g)
-                    if (matches) {
-                      const lixo = ['example', 'teste', 'domain', 'email', 'sentry', 'wix', '.png', '.jpg', '.gif', '.svg', 'noreply', 'no-reply', 'nuvem', '2x.']
-                      const valido = matches.find(e => !lixo.some(l => e.toLowerCase().includes(l)) && e.length >= 8 && e.length <= 60)
-                      if (valido) email = valido.toLowerCase()
-                    }
-                  } catch {}
-                }
-                // Fallback: contato@dominio se não achou email real
+                    const lixo = ['example','teste','.png','.jpg','sentry','wix','noreply','nuvem','2x.']
+                    const m = (html.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/g) || []).find((e: string) => !lixo.some(l => e.toLowerCase().includes(l)) && e.length >= 8 && e.length <= 60)
+                    if (m) email = m.toLowerCase()
+                  }
+                } catch {}
                 if (!email) email = `contato@${domain}`
               }
             }
-            if (email && (email.includes('.png') || email.includes('.jpg') || email.includes('example') || email.includes('meu@') || email.includes('test@') || email.length < 8)) {
-              email = null
-            }
 
-            // Skip se já enviou para esse email
-            if (!email || emailsJaEnviados.has(email.toLowerCase()) || emailsEnviados.has(email.toLowerCase())) continue
-            emailsEnviados.add(email.toLowerCase())
+            if (!email || emailsVistos.has(email.toLowerCase())) continue
+            emailsVistos.add(email.toLowerCase())
 
-            // Salva e envia
-            try {
-              await supabase.from('prospectos').insert({
-                nome_loja: place.name, cidade, email, website, place_id: place.place_id,
-                status: 'enviado', enviado_em: new Date().toISOString(),
-              })
-
-              const assunto = ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)](place.name, cidade)
-              await resend.emails.send({
-                from: process.env.RESEND_FROM || 'LuvyMetrics <onboarding@resend.dev>',
-                to: email, subject: assunto, html: emailHtml(place.name, cidade),
-              })
-              totalEnviados++
-              await new Promise(r => setTimeout(r, 150))
-            } catch { totalErros++ }
+            await supabase.from('prospectos').insert({
+              nome_loja: place.name, email, website, cidade, place_id: place.place_id, status: 'novo',
+            })
+            novosSalvos++
           }
         } catch {}
       }
     }
 
-    console.log(`Prospecção: ${cidadesParaBuscar.length} cidades × ${termosParaBuscar.length} termos | Lojas: ${totalLojas} | Emails: ${totalEnviados}`)
+    // ════════════════════════════════════
+    // FASE 2: ENVIA 30 da fila (~30s)
+    // ════════════════════════════════════
+    const { data: fila } = await supabase.from('prospectos').select('*').eq('status', 'novo').not('email', 'is', null).limit(30)
+    let enviados = 0, erros = 0
+
+    for (const p of fila || []) {
+      try {
+        const assunto = ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)](p.nome_loja || 'sua loja')
+        await resend.emails.send({
+          from: process.env.RESEND_FROM || 'LuvyMetrics <onboarding@resend.dev>',
+          to: p.email, subject: assunto,
+          html: emailHtml(p.nome_loja || 'lojista', p.cidade),
+        })
+        await supabase.from('prospectos').update({ status: 'enviado', enviado_em: new Date().toISOString() }).eq('id', p.id)
+        enviados++
+        await new Promise(r => setTimeout(r, 150))
+      } catch { erros++ }
+    }
+
+    const { count: filaRestante } = await supabase.from('prospectos').select('id', { count: 'exact', head: true }).eq('status', 'novo')
+
+    console.log(`Prospecção: buscou ${buscados} lojas (+${novosSalvos} novos), enviou ${enviados} emails, fila: ${filaRestante}`)
 
     return NextResponse.json({
-      cidades: cidadesParaBuscar, termos_usados: termosParaBuscar.length,
-      cidades_cobertas: cidadesJaCobertas.size, cidades_restantes: cidadesNaoCobertas.length,
-      lojas_encontradas: totalLojas, emails_enviados: totalEnviados, erros: totalErros,
-      total_prospectos: emailsJaEnviados.size + totalEnviados,
+      buscados, novos_salvos: novosSalvos,
+      emails_enviados: enviados, erros,
+      fila_restante: filaRestante,
+      total_prospectos: emailsVistos.size,
     })
   } catch (error: any) {
     console.error('Erro prospectar:', error)
