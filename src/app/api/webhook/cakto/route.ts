@@ -115,8 +115,10 @@ export async function POST(req: NextRequest) {
 
     // 4 — Envia email de boas-vindas via Resend direto
     try {
-      const { Resend } = await import('resend')
-      const resend = new Resend(process.env.RESEND_API_KEY)
+      const { Resend } = require('resend')
+      const apiKey = process.env.RESEND_API_KEY
+      if (!apiKey) { console.error('RESEND_API_KEY não configurada!'); throw new Error('Missing RESEND_API_KEY') }
+      const resend = new Resend(apiKey)
       const emailResult = await resend.emails.send({
         from: process.env.RESEND_FROM || 'LuvyMetrics <contato@luvymetrics.com.br>',
         to: email,
