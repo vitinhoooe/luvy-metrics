@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 export default function RecuperarSenha() {
   const [email, setEmail] = useState('')
@@ -10,9 +9,10 @@ export default function RecuperarSenha() {
   async function handleRecuperar(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    const supabase = createClient()
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://luvymetrics.com.br/nova-senha'
+    await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
     setEnviado(true)
     setLoading(false)
