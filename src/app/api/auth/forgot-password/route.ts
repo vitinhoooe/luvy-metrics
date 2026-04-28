@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo: `${SITE_URL}/nova-senha` },
+      options: { redirectTo: `${SITE_URL}/auth/callback?next=/nova-senha` },
     })
 
     if (linkErr || !linkData?.properties?.action_link) {

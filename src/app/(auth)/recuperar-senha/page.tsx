@@ -80,11 +80,12 @@ export default function RecuperarSenha() {
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📧</div>
               <h2 style={{ color: '#f5f0ff', fontSize: '20px', fontWeight: '700', margin: '0 0 12px' }}>
-                Email enviado!
+                Verifique seu email
               </h2>
               <p style={{ color: '#9d8faa', fontSize: '14px' }}>
-                Verifique sua caixa de entrada e
-                clique no link para criar nova senha.
+                Se essa conta existir, você receberá um email
+                em alguns minutos com o link para criar uma
+                nova senha. Não esqueça de checar a pasta de spam.
               </p>
             </div>
           )}
