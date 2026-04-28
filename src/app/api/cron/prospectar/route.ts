@@ -30,13 +30,16 @@ const LISTA = [
 ].map(([n, p, v, pr]) => `<li><strong>${n}</strong> — +${p}% (${v} vendas/dia · R$${pr})</li>`).join('')
 
 const ASSUNTOS = [
-  (l: string) => `${l} — produto subiu +87% essa semana no ML`,
-  (l: string) => `Vi uma oportunidade para ${l} essa semana`,
-  (l: string) => `Dado exclusivo: o que está bombando para ${l}`,
+  (l: string, cidade?: string) => `🔥 ${TOP.nome.split(' ').slice(0, 3).join(' ')} esgotando em ${cidade || 'sua região'} — +${TOP.pct}%`,
+  (l: string) => `Dado importante para ${l || 'sua loja'} essa semana`,
+  (l: string, cidade?: string) => `Seu concorrente em ${cidade || 'SP'} já sabe disso — você sabe?`,
 ]
 
-function emailHtml(nome: string, cidade?: string) {
-  return `<div style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:24px;color:#111827"><div style="margin-bottom:24px"><span style="font-size:22px;font-weight:800"><span style="color:#111827">Luvy</span><span style="color:#7c3aed">Metrics</span></span></div><p style="font-size:16px;margin:0 0 16px">Olá, <strong>${nome}</strong>!</p><p style="color:#374151;line-height:1.7;margin:0 0 20px">Monitorando o mercado adulto essa semana, vi algo importante${cidade ? ' para sex shops em <strong>' + cidade + '</strong>' : ''}:</p><div style="background:#f5f3ff;border-left:4px solid #7c3aed;padding:20px;border-radius:0 8px 8px 0;margin:0 0 20px"><p style="margin:0 0 8px;font-weight:700;color:#7c3aed;font-size:16px">🔥 ${TOP.nome} subiu +${TOP.pct}% essa semana</p><p style="margin:0;color:#374151;font-size:14px">${TOP.vendas} vendas por dia · R$${TOP.preco} preço médio</p></div><p style="color:#374151;font-weight:600;margin:0 0 8px">Outros em alta:</p><ul style="color:#374151;line-height:2.2;margin:0 0 24px;padding-left:20px">${LISTA}</ul><div style="text-align:center;margin:28px 0"><a href="https://pay.cakto.com.br/wanxtpo" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Testar 7 dias grátis →</a><p style="color:#7c3aed;font-size:15px;font-weight:700;margin:10px 0 0">R$97/mês</p></div><p style="color:#374151;margin-top:20px">Abraços,<br><strong>Paulo</strong><br>LuvyMetrics<br><a href="https://wa.me/5521986826670" style="color:#7c3aed">WhatsApp: (21) 98682-6670</a></p></div>`
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://luvymetrics.com.br'
+
+function emailHtml(nome: string, cidade: string | undefined, prospectoId: string) {
+  const pixel = `<img src="${SITE_URL}/api/track/open?id=${prospectoId}" width="1" height="1" alt="" style="display:none;border:0" />`
+  return `<div style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:24px;color:#111827"><div style="margin-bottom:24px"><span style="font-size:22px;font-weight:800"><span style="color:#111827">Luvy</span><span style="color:#7c3aed">Metrics</span></span></div><p style="font-size:16px;margin:0 0 16px">Olá, <strong>${nome}</strong>!</p><p style="color:#374151;line-height:1.7;margin:0 0 20px">Monitorando o mercado adulto essa semana, vi algo importante${cidade ? ' para sex shops em <strong>' + cidade + '</strong>' : ''}:</p><div style="background:#f5f3ff;border-left:4px solid #7c3aed;padding:20px;border-radius:0 8px 8px 0;margin:0 0 20px"><p style="margin:0 0 8px;font-weight:700;color:#7c3aed;font-size:16px">🔥 ${TOP.nome} subiu +${TOP.pct}% essa semana</p><p style="margin:0;color:#374151;font-size:14px">${TOP.vendas} vendas por dia · R$${TOP.preco} preço médio</p></div><p style="color:#374151;font-weight:600;margin:0 0 8px">Outros em alta:</p><ul style="color:#374151;line-height:2.2;margin:0 0 24px;padding-left:20px">${LISTA}</ul><div style="text-align:center;margin:28px 0"><a href="https://pay.cakto.com.br/wanxtpo" style="background:#7c3aed;color:#fff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block">Testar 7 dias grátis →</a><p style="color:#7c3aed;font-size:15px;font-weight:700;margin:10px 0 0">R$97/mês</p></div><p style="color:#374151;margin-top:20px">Abraços,<br><strong>Paulo</strong><br>LuvyMetrics<br><a href="https://wa.me/5521986826670" style="color:#7c3aed">WhatsApp: (21) 98682-6670</a></p>${pixel}</div>`
 }
 
 export async function GET() {
@@ -118,11 +121,11 @@ export async function GET() {
 
     for (const p of fila || []) {
       try {
-        const assunto = ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)](p.nome_loja || 'sua loja')
+        const assunto = ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)](p.nome_loja || 'sua loja', p.cidade)
         await resend.emails.send({
-          from: process.env.RESEND_FROM || 'LuvyMetrics <onboarding@resend.dev>',
+          from: process.env.RESEND_FROM || 'LuvyMetrics <contato@luvymetrics.com.br>',
           to: p.email, subject: assunto,
-          html: emailHtml(p.nome_loja || 'lojista', p.cidade),
+          html: emailHtml(p.nome_loja || 'lojista', p.cidade, p.id),
         })
         await supabase.from('prospectos').update({ status: 'enviado', enviado_em: new Date().toISOString() }).eq('id', p.id)
         enviados++
