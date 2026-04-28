@@ -11,9 +11,12 @@ export async function POST(req: NextRequest) {
     const evento = body.event ?? body.type ?? ''
     const ADMIN_EMAIL = 'paulobernardobtt@gmail.com'
 
+    // Cakto pode enviar campos na raiz OU dentro de body.data
+    const payload = body.data ?? body
+
     // ─── CANCELAMENTO / REEMBOLSO ────────────────────────────────
     if (['subscription.canceled', 'purchase.refunded', 'subscription.expired'].includes(evento)) {
-      const email = (body.customer ?? body.buyer)?.email as string | undefined
+      const email = (payload.customer ?? payload.buyer ?? body.customer ?? body.buyer)?.email as string | undefined
       if (!email || email === ADMIN_EMAIL) return NextResponse.json({ ok: true })
 
       console.log('Cancelamento para:', email)
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, ignorado: true })
     }
 
-    const customer = body.customer ?? body.buyer ?? {}
+    const customer = payload.customer ?? payload.buyer ?? body.customer ?? body.buyer ?? {}
     const email    = customer.email as string | undefined
     const nome     = (customer.name ?? customer.full_name ?? '') as string
     const telefone = (customer.phone ?? customer.phone_number ?? '') as string
