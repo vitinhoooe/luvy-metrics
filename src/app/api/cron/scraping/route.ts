@@ -34,6 +34,10 @@ function extrairEmails(html: string): string[] {
 }
 
 export async function GET(req: Request) {
+  const auth = req.headers.get('authorization')
+  if (auth !== 'Bearer ' + process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  }
   try {
     if (!GOOGLE_KEY) return NextResponse.json({ error: 'GOOGLE_PLACES_API_KEY missing' }, { status: 500 })
 

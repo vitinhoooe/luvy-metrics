@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 
-export const maxDuration = 55
+export const maxDuration = 60
 
 const TOP = { nome: 'Vibrador Sugador Rose Recarregável', pct: 87, vendas: 920, preco: '129,90' }
 const LISTA = [
@@ -13,9 +13,9 @@ const LISTA = [
 ].map(([n, p, v, pr]) => `<li><strong>${n}</strong> — +${p}% (${v} vendas/dia · R$${pr})</li>`).join('')
 
 const ASSUNTOS = [
-  (l: string, c?: string) => `${l || 'Oi'} — ${TOP.nome} subiu +${TOP.pct}% essa semana`,
-  (l: string, c?: string) => `Dado exclusivo para sex shops em ${c || 'sua região'}`,
-  (l: string) => `Vi uma oportunidade para ${l || 'sua loja'} agora`,
+  (l: string, c?: string) => `🔥 ${TOP.nome.split(' ').slice(0, 3).join(' ')} esgotando em ${c || 'sua região'} — +${TOP.pct}%`,
+  (l: string) => `Dado importante para ${l || 'sua loja'} essa semana`,
+  (l: string, c?: string) => `Seu concorrente em ${c || 'SP'} já sabe disso — você sabe?`,
 ]
 
 function emailHtml(p: any) {
@@ -50,11 +50,16 @@ function emailHtml(p: any) {
 </div>`
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const auth = req.headers.get('authorization')
+  if (auth !== 'Bearer ' + process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  }
+
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   const resend = new Resend(process.env.RESEND_API_KEY)
 
-  const { data: novos } = await supabase.from('prospectos').select('*').eq('status', 'novo').not('email', 'is', null).limit(30)
+  const { data: novos } = await supabase.from('prospectos').select('*').eq('status', 'novo').not('email', 'is', null).limit(200)
 
   let enviados = 0, erros = 0
   for (const p of novos || []) {
@@ -66,7 +71,6 @@ export async function GET() {
       })
       await supabase.from('prospectos').update({ status: 'enviado', enviado_em: new Date().toISOString() }).eq('id', p.id)
       enviados++
-      await new Promise(r => setTimeout(r, 150))
     } catch { erros++ }
   }
 
