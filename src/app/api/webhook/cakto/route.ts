@@ -62,11 +62,14 @@ export async function POST(req: NextRequest) {
 
     if (authError) {
       if (authError.message.includes('already registered') || authError.message.includes('already been registered')) {
-        // Busca usuário existente
+        // Busca usuário existente e atualiza senha
         const { data: lista } = await supabase.auth.admin.listUsers()
         const existente = lista?.users?.find((u) => u.email === email)
         userId = existente?.id
-        console.log('Usuário já existia, reutilizando:', userId)
+        if (userId) {
+          await supabase.auth.admin.updateUserById(userId, { password: senhaTemp })
+          console.log('Senha atualizada para user existente:', userId)
+        }
       } else {
         console.error('Erro ao criar usuário:', authError)
         return NextResponse.json({ error: authError.message }, { status: 500 })
@@ -114,8 +117,8 @@ export async function POST(req: NextRequest) {
     try {
       const { Resend } = await import('resend')
       const resend = new Resend(process.env.RESEND_API_KEY)
-      await resend.emails.send({
-        from: process.env.RESEND_FROM || 'LuvyMetrics <no-reply@luvymetrics.com.br>',
+      const emailResult = await resend.emails.send({
+        from: process.env.RESEND_FROM || 'LuvyMetrics <contato@luvymetrics.com.br>',
         to: email,
         subject: '🎉 Seu acesso ao LuvyMetrics está pronto!',
         html: `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
@@ -141,14 +144,14 @@ export async function POST(req: NextRequest) {
   </div>
   <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:0 0 24px">
     <p style="margin:0 0 12px;font-weight:700;color:#111827">Precisa de ajuda?</p>
-    <p style="margin:0;color:#374151;font-size:14px">Responda este email ou fale no WhatsApp:<br><a href="https://wa.me/5521992403773" style="color:#7c3aed">(21) 99240-3773</a></p>
+    <p style="margin:0;color:#374151;font-size:14px">Responda este email ou fale no WhatsApp:<br><a href="https://wa.me/5521986826670" style="color:#7c3aed">(21) 98682-6670</a></p>
   </div>
   <p style="color:#374151;font-size:15px">Bom lucro!<br><strong>Paulo</strong><br>Fundador · LuvyMetrics</p>
 </body></html>`,
       })
-      console.log('Email boas-vindas enviado para:', email)
-    } catch (emailErr) {
-      console.error('Aviso — falha no email:', emailErr)
+      console.log('Email boas-vindas resultado:', emailResult.data?.id ? 'ENVIADO ID:' + emailResult.data.id : 'FALHOU:' + emailResult.error?.message)
+    } catch (emailErr: any) {
+      console.error('Aviso — falha no email:', emailErr?.message)
     }
 
     // 5 — Log para disparo manual de WhatsApp
