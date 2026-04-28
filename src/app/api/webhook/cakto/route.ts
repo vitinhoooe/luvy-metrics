@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       const user = users?.users?.find(u => u.email === email)
 
       if (user) {
-        await supabase.from('perfis').update({ plano: 'cancelado' }).eq('user_id', user.id)
+        await supabase.from('perfis').update({ plano: 'cancelado', ativo: false }).eq('user_id', user.id)
         console.log('Acesso cancelado para:', email)
       }
 
