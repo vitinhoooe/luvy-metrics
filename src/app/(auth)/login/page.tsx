@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -9,6 +9,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
   const router = useRouter()
+
+  // Fallback: se Supabase aterrissar aqui com hash de recovery (Site URL fallback
+  // por allowlist faltando), redireciona pra /nova-senha preservando o hash.
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash.includes('access_token') && hash.includes('type=recovery')) {
+      window.location.replace('/nova-senha' + hash)
+    }
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()

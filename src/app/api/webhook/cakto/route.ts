@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
       const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
         type: 'recovery',
         email,
-        options: { redirectTo: `${SITE_URL}/auth/callback?next=/nova-senha` },
+        options: { redirectTo: `${SITE_URL}/nova-senha` },
       })
       if (linkErr) console.error('Aviso — erro ao gerar link de setup:', linkErr.message)
       setupLink = linkData?.properties?.action_link
