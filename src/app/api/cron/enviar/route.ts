@@ -13,9 +13,9 @@ const LISTA = [
 ].map(([n, p, v, pr]) => `<li><strong>${n}</strong> — +${p}% (${v} vendas/dia · R$${pr})</li>`).join('')
 
 const ASSUNTOS = [
-  (l: string, c?: string) => `🔥 ${TOP.nome.split(' ').slice(0, 3).join(' ')} esgotando em ${c || 'sua região'} — +${TOP.pct}%`,
-  (l: string) => `Dado importante para ${l || 'sua loja'} essa semana`,
-  (l: string, c?: string) => `Seu concorrente em ${c || 'SP'} já sabe disso — você sabe?`,
+  (l: string, c?: string) => `${TOP.nome.split(' ').slice(0, 3).join(' ')} esgotando na sua região (+${TOP.pct}%)`,
+  () => `O que está bombando em sex shops essa semana`,
+  (l: string, c?: string) => `Dado exclusivo: tendências de ${c || 'sex shops'} agora`,
 ]
 
 function emailHtml(p: any) {
@@ -43,11 +43,26 @@ function emailHtml(p: any) {
     <p style="color:#7c3aed;font-size:15px;font-weight:700;margin:0">Apenas R$97/mês no lançamento</p>
   </div>
   <p style="color:#374151;line-height:1.7;border-top:1px solid #f3f4f6;padding-top:20px;font-size:14px"><strong>PS:</strong> Estamos com apenas <strong>23 vagas</strong> no preço de lançamento R$97/mês. Depois sobe para R$297. Responda este email se quiser garantir o seu.</p>
-  <p style="color:#374151;margin-top:20px">Abraços,<br><strong>Paulo</strong><br>Fundador · LuvyMetrics<br><a href="https://wa.me/5521986826670" style="color:#7c3aed;font-size:14px">WhatsApp: (21) 98682-6670</a></p>
+  <p style="color:#374151;margin-top:20px">Abraços,<br><strong>Paulo</strong><br>Fundador · LuvyMetrics</p>
   <hr style="border:none;border-top:1px solid #f3f4f6;margin:28px 0 16px"/>
-  <p style="color:#9ca3af;font-size:11px;text-align:center">Você recebeu porque sua loja foi encontrada no Google Maps Brasil.</p>
+  <p style="color:#9ca3af;font-size:11px;text-align:center;line-height:1.6">Você recebeu porque sua loja foi encontrada no Google Maps Brasil.<br>Dúvidas: <a href="https://wa.me/5521986826670" style="color:#9ca3af">WhatsApp (21) 98682-6670</a></p>
   <img src="https://luvymetrics.com.br/api/track/open?id=${p.id}" width="1" height="1" style="display:none" alt=""/>
 </div>`
+}
+
+function emailText(p: any) {
+  return `Olá ${p.nome_loja || 'lojista'}! ${TOP.nome} subiu +${TOP.pct}% essa semana${p.cidade ? ' (sex shops em ' + p.cidade + ')' : ''}.
+
+LuvyMetrics entrega dados de tendências do mercado adulto todo dia, para você saber o que comprar antes do concorrente.
+
+Teste 7 dias grátis (sem cartão): https://pay.cakto.com.br/wanxtpo
+
+Apenas R$97/mês no lançamento — apenas 23 vagas neste preço.
+
+Responda este email para garantir sua vaga.
+
+Paulo · Fundador · LuvyMetrics
+WhatsApp: (21) 98682-6670`
 }
 
 export async function GET(req: Request) {
@@ -59,20 +74,27 @@ export async function GET(req: Request) {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   const resend = new Resend(process.env.RESEND_API_KEY)
 
-  const { data: novos } = await supabase.from('prospectos').select('*').eq('status', 'novo').not('email', 'is', null).limit(200)
+  const { data: novos } = await supabase.from('prospectos').select('*').eq('status', 'novo').not('email', 'is', null).limit(500)
 
   let enviados = 0, erros = 0
-  for (const p of novos || []) {
-    try {
-      const assunto = ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)](p.nome_loja || 'sua loja', p.cidade)
-      await resend.emails.send({
-        from: process.env.RESEND_FROM || 'LuvyMetrics <contato@luvymetrics.com.br>',
-        to: p.email, subject: assunto, html: emailHtml(p),
-      })
-      await supabase.from('prospectos').update({ status: 'enviado', enviado_em: new Date().toISOString() }).eq('id', p.id)
-      enviados++
-    } catch { erros++ }
+  // Batches paralelos pra caber em maxDuration=60. 500 sequenciais (300ms cada)
+  // estouram 150s; com concorrência 10 levamos ~15s.
+  const BATCH = 10
+  const lista = novos || []
+  for (let i = 0; i < lista.length; i += BATCH) {
+    const chunk = lista.slice(i, i + BATCH)
+    await Promise.all(chunk.map(async (p) => {
+      try {
+        const assunto = ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)](p.nome_loja || 'sua loja', p.cidade)
+        await resend.emails.send({
+          from: process.env.RESEND_FROM || 'LuvyMetrics <contato@luvymetrics.com.br>',
+          to: p.email, subject: assunto, html: emailHtml(p), text: emailText(p),
+        })
+        await supabase.from('prospectos').update({ status: 'enviado', enviado_em: new Date().toISOString() }).eq('id', p.id)
+        enviados++
+      } catch { erros++ }
+    }))
   }
 
-  return NextResponse.json({ enviados, erros, fila_restante: (novos?.length || 0) - enviados })
+  return NextResponse.json({ enviados, erros, fila_restante: lista.length - enviados })
 }

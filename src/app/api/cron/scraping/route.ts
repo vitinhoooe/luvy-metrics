@@ -25,7 +25,19 @@ const CIDADES = [
   'Aracaju SE','Teresina PI','João Pessoa PB',
 ]
 
-const TERMOS = ['sex shop', 'loja lingerie sensual', 'boutique erotica', 'loja produtos adultos']
+const TERMOS = [
+  'sex shop', 'loja lingerie sensual', 'boutique erotica', 'loja produtos adultos',
+  'sex shop whatsapp contato brasil',
+  'loja erotica instagram email brasil',
+  'sex shop site email contato sp',
+  'lingerie atacado email fornecedor',
+  'revendedora sex shop email contato',
+  'distribuidora erotico email brasil',
+  'sex shop facebook email contato',
+  'boutique erotica email brasil',
+  'produtos adultos loja email sp rj',
+  'sex shop delivery email contato',
+]
 
 function extrairEmails(html: string): string[] {
   const matches = html.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/g) || []
@@ -60,7 +72,7 @@ export async function GET(req: Request) {
     let encontrados = 0, salvos = 0, emailsReais = 0
 
     for (const cidade of cidadesHoje) {
-      for (const termo of TERMOS.slice(0, 1)) {
+      for (const termo of TERMOS.slice(0, 3)) {
         try {
           const q = encodeURIComponent(`${termo} em ${cidade}`)
           const res = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${q}&language=pt-BR&key=${GOOGLE_KEY}`, { signal: AbortSignal.timeout(6000) })

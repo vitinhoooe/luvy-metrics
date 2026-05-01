@@ -43,8 +43,8 @@ export async function GET(req: Request) {
       // Descobre quais cidades já foram cobertas
       const { data: cidadesData } = await supabase.from('prospectos').select('cidade')
       const cidadesCobertas = new Set((cidadesData || []).map((c: any) => c.cidade))
-      const cidadesNovas = TODAS_CIDADES.filter(c => !cidadesCobertas.has(c)).slice(0, 2)
-      const cidadesParaBuscar = cidadesNovas.length > 0 ? cidadesNovas : TODAS_CIDADES.slice(0, 2)
+      const cidadesNovas = TODAS_CIDADES.filter(c => !cidadesCobertas.has(c)).slice(0, 15)
+      const cidadesParaBuscar = cidadesNovas.length > 0 ? cidadesNovas : TODAS_CIDADES.slice(0, 15)
 
       for (const cidade of cidadesParaBuscar) {
         try {
