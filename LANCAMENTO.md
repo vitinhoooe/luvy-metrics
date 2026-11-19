@@ -31,6 +31,8 @@ faltam só os passos abaixo (contas e chaves são suas: o Claude não cria conta
 | `LUVY_CHAVE_CRIPTO` | gere no terminal: `openssl rand -base64 32` (guarda o token do Mercado Pago das lojistas criptografado) |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys (crie uma nova) |
 | `NEXT_PUBLIC_SITE_URL` | o domínio final, ex.: `https://luvymetrics.com.br` |
+| `NEXT_PUBLIC_WPP_SUPORTE` | WhatsApp da equipe com DDD (botão de suporte na landing e “Assinar” nos Planos). Sem ela, os botões somem |
+| `NEXT_PUBLIC_INSTAGRAM` | (opcional) Instagram da LuvyMetrics, sem @ |
 
 Nunca coloque essas chaves no código nem no Git. No computador ficam no `.env.local` (já ignorado).
 
@@ -38,7 +40,7 @@ Nunca coloque essas chaves no código nem no Git. No computador ficam no `.env.l
 
 1. Envie o código: `git push -u origin feat/luvy-v2` (e faça o merge na `main` quando quiser).
 2. Em **vercel.com → Add New → Project**, importe o repositório.
-3. Em **Settings → Environment Variables**, cole as 6 variáveis acima (Production).
+3. Em **Settings → Environment Variables**, cole as variáveis acima (Production).
 4. Deploy. Depois, em **Settings → Domains**, ligue o seu domínio.
 5. **Não** coloque `LUVY_PREVIA=1` em produção (ela liga as telas de demonstração).
 
@@ -66,8 +68,8 @@ O aviso automático (webhook) só funciona com o site em **https** (depois do de
 
 ## 6. Antes de abrir para o público
 
-- [ ] **Termos de uso e Política de privacidade (LGPD)**: links do rodapé ainda apontam para `#`
-- [ ] **WhatsApp e Instagram de suporte** no rodapé da landing (`src/app/_landing/LandingMosaik.tsx`, constante `WHATSAPP`)
+- [ ] **Termos de uso e Política de privacidade (LGPD)**: as páginas ainda não existem (a coluna “Legal” do rodapé está escondida até lá)
+- [ ] **WhatsApp e Instagram de suporte**: preencher `NEXT_PUBLIC_WPP_SUPORTE` e `NEXT_PUBLIC_INSTAGRAM`
 - [ ] **Cobrança da assinatura**: hoje a tela de Planos manda assinar pelo WhatsApp da equipe
 - [ ] Beta com até 10 lojistas fundadoras e uma conversa de feedback por mês
 

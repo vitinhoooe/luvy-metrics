@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // áreas que exigem login (o resto — landing, login, vitrine pública — é aberto)
-const PROTEGIDAS = ['/painel', '/produtos', '/vender', '/caixa', '/vendas', '/calculadora', '/planos', '/conta', '/comecar', '/em-breve', '/vitrine', '/pedidos', '/repor', '/clientes', '/fornecedores', '/atendente', '/integracoes']
+const PROTEGIDAS = ['/painel', '/produtos', '/vender', '/caixa', '/vendas', '/calculadora', '/planos', '/conta', '/comecar', '/vitrine', '/pedidos', '/repor', '/clientes', '/fornecedores', '/atendente', '/integracoes']
 // páginas de entrada: quem já está logado vai para o painel
 const SO_DESLOGADO = ['/entrar', '/criar-conta']
 

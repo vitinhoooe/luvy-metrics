@@ -5,8 +5,10 @@ import VideoReal from './VideoReal'
 import './mosaik.css'
 
 const SIGNUP_URL = '/criar-conta'
-// TODO: número real do WhatsApp
-const WHATSAPP = 'https://wa.me/55XXXXXXXXXXX'
+// WhatsApp e Instagram de suporte: aparecem só quando configurados (variáveis de ambiente)
+const WPP = (process.env.NEXT_PUBLIC_WPP_SUPORTE ?? '').replace(/\D/g, '')
+const WHATSAPP = WPP ? `https://wa.me/${WPP.startsWith('55') ? WPP : '55' + WPP}` : null
+const INSTAGRAM = (process.env.NEXT_PUBLIC_INSTAGRAM ?? '').replace(/^@/, '') || null
 
 const semMovimento = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -123,7 +125,7 @@ const PLANOS = [
   {
     nome: 'Pro', para: 'Para vender no balcão e na internet sem perder o controle.', preco: '197', depois: '297', periodo: '/mês', dia: 'R$ 6,57',
     nota: 'Preço de lançamento garantido por 12 meses. Sem fidelidade.',
-    cta: 'Testar o Pro grátis', itens: ['Tudo do Starter', 'Seu site próprio, sem comissão por venda', 'Atendente IA 24h que só oferece o que tem em estoque', 'Pix e cartão pelo Mercado Pago da sua conta, com o pedido confirmado sozinho', 'Estoque inteligente: o que repor e o que pôr em promoção', 'Clientes e fornecedores'],
+    cta: 'Testar o Pro grátis', itens: ['Tudo do Starter', 'Seu site próprio com logo, fotos e frete para todo o Brasil, sem comissão por venda', 'Atendente IA 24h que só oferece o que tem em estoque', 'Pix e cartão pelo Mercado Pago da sua conta, com o pedido confirmado sozinho', 'Estoque inteligente: o que repor e o que pôr em promoção', 'Clientes e fornecedores'],
     sem: '', destaque: true, selo: 'Preço de lançamento',
   },
   {
@@ -141,7 +143,7 @@ const ENTREGAS: { icone: string; t: string; x: string; pronto: boolean }[] = [
   { icone: 'busca', t: 'Sua planilha em 2 minutos', x: 'Arraste o Excel. A IA entende as colunas e você confere antes de importar.', pronto: true },
   { icone: 'sino', t: 'Alerta antes de faltar', x: 'Estoque baixo e produto esgotado aparecem assim que acontecem.', pronto: true },
   { icone: 'cadeado', t: 'Caixa que fecha', x: 'Abre com o troco, mostra quanto deve ter na gaveta e se sobrou ou faltou.', pronto: true },
-  { icone: 'pino', t: 'Seu site próprio', x: 'Sua loja online com sua cor e seu catálogo, Pix com QR Code e sem comissão por venda.', pronto: true },
+  { icone: 'pino', t: 'Seu site próprio', x: 'Sua loja online com seu logo, sua cor e fotos dos produtos. Frete por região para todo o Brasil e sem comissão por venda.', pronto: true },
   { icone: 'chat', t: 'Atendente IA 24h', x: 'Responde suas clientes de madrugada, só oferece o que tem em estoque e coloca na sacola.', pronto: true },
   { icone: 'sino', t: 'Pix e cartão no seu site', x: 'Conecte o seu Mercado Pago: a cliente paga com Pix ou cartão, o dinheiro cai na sua conta e o pedido vira “pago” sozinho.', pronto: true },
   { icone: 'sino', t: 'Pedidos até a entrega', x: 'Aviso com som a cada pedido, prazos com alerta de atraso e rastreio colado de uma vez.', pronto: true },
@@ -318,7 +320,7 @@ export default function LandingMosaik() {
       {/* HERO: a promessa */}
       <section className="mk-hero">
         <nav className="mk-nav" aria-label="Principal">
-          <a href="#" aria-label="LuvyMetrics, início"><Logo /></a>
+          <a href="/" aria-label="LuvyMetrics, início"><Logo /></a>
           <div className="mk-nav-pill glass">
             <a href="#video">Vídeo</a><a href="#tempo">Seu tempo</a><a href="#precos">Preços</a>
           </div>
@@ -517,18 +519,18 @@ export default function LandingMosaik() {
           <div className="mk-foot-brand">
             <Logo />
             <p>Loja online e controle de estoque para bem-estar íntimo.</p>
-            {/* TODO: links reais do Instagram e WhatsApp */}
-            <div className="mk-social">
-              <a href="#" className="glass" aria-label="Instagram"><I n="insta" s={18} /></a>
-              <a href={WHATSAPP} className="glass" aria-label="WhatsApp"><I n="chat" s={18} /></a>
-            </div>
+            {(WHATSAPP || INSTAGRAM) && (
+              <div className="mk-social">
+                {INSTAGRAM && <a href={`https://instagram.com/${INSTAGRAM}`} className="glass" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><I n="insta" s={18} /></a>}
+                {WHATSAPP && <a href={WHATSAPP} className="glass" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer"><I n="chat" s={18} /></a>}
+              </div>
+            )}
           </div>
           <div className="mk-foot-cols">
             <div><h6>Produto</h6><a href="#video">Vídeo</a><a href="#tudo">O que vem</a><a href="#tempo">Seu tempo</a><a href="#precos">Preços</a></div>
             <div><h6>Conta</h6><a href="/entrar">Entrar</a><a href={SIGNUP_URL}>Testar grátis</a></div>
-            <div><h6>Ajuda</h6><a href="#duvidas">Dúvidas</a><a href={WHATSAPP}>WhatsApp</a></div>
-            {/* TODO: páginas de Termos e Privacidade (LGPD) */}
-            <div><h6>Legal</h6><a href="#">Termos de uso</a><a href="#">Privacidade</a></div>
+            <div><h6>Ajuda</h6><a href="#duvidas">Dúvidas</a>{WHATSAPP && <a href={WHATSAPP} target="_blank" rel="noopener noreferrer">WhatsApp</a>}</div>
+            {/* Termos e Privacidade (LGPD): ligar quando as páginas existirem — bloqueia o lançamento público */}
           </div>
         </div>
         <div className="mk-foot-line">© {new Date().getFullYear()} LuvyMetrics</div>

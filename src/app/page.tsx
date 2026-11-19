@@ -10,7 +10,7 @@ const mono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], variab
 export const metadata: Metadata = {
   title: 'LuvyMetrics — Loja online e controle de estoque para bem-estar íntimo',
   description:
-    'Estoque único para balcão e site, lucro real de cada venda e preço certo para Mercado Livre e Shopee. Planos a partir de R$ 97 por mês. 7 dias grátis, sem cartão.',
+    'Site próprio com Pix e cartão pelo Mercado Pago, estoque único com o balcão e atendente virtual 24h. Para lojas de bem-estar íntimo. Planos a partir de R$ 97 por mês, 7 dias grátis, sem cartão.',
 }
 
 export default async function Home() {

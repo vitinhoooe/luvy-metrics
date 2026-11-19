@@ -6,7 +6,7 @@ const ITENS: Record<Plano, { sim: string[]; nao: string[] }> = {
     nao: ['Site próprio', 'Atendente IA 24h'],
   },
   pro: {
-    sim: ['Tudo do Starter', 'Site próprio, sem comissão', 'Atendente IA 24h', 'Pedidos com Pix conferido pelo extrato', 'Estoque inteligente', 'Clientes e fornecedores'],
+    sim: ['Tudo do Starter', 'Site próprio com logo, fotos e frete para todo o Brasil', 'Pix e cartão pelo Mercado Pago, pedido confirmado sozinho', 'Atendente IA 24h', 'Estoque inteligente', 'Clientes e fornecedores'],
     nao: [],
   },
   business: {
@@ -43,14 +43,14 @@ export function TabelaPlanos({ assinatura, loja, wpp }: { assinatura: Assinatura
               ) : wpp ? (
                 <a className="lv-btn" href={`https://wa.me/${wpp}?text=${msg}`} target="_blank" rel="noopener noreferrer">Assinar {p.nome}</a>
               ) : (
-                <span className="lv-btn sec" aria-disabled>Pagamento online em breve</span>
+                <span className="lv-btn sec" aria-disabled>Assinatura com a nossa equipe</span>
               )}
             </div>
           )
         })}
       </div>
       <p style={{ color: 'var(--dim)', fontSize: 13, marginTop: 14 }}>
-        O pagamento automático (Pix, cartão e boleto) está sendo ativado. Enquanto isso, a assinatura é feita com a nossa equipe pelo WhatsApp.
+        A assinatura é feita com a nossa equipe pelo WhatsApp: você escolhe o plano e paga por Pix. Sem fidelidade no mensal.
       </p>
     </>
   )
