@@ -1,71 +1,56 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// áreas que exigem login (o resto — landing, login, vitrine pública — é aberto)
+const PROTEGIDAS = ['/painel', '/produtos', '/vender', '/caixa', '/vendas', '/calculadora', '/planos', '/conta', '/comecar', '/em-breve', '/vitrine', '/pedidos', '/repor', '/clientes', '/fornecedores', '/atendente', '/integracoes']
+// páginas de entrada: quem já está logado vai para o painel
+const SO_DESLOGADO = ['/entrar', '/criar-conta']
+
 export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  let resposta = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+        getAll: () => request.cookies.getAll(),
+        setAll(lista) {
+          lista.forEach(({ name, value }) => request.cookies.set(name, value))
+          resposta = NextResponse.next({ request })
+          lista.forEach(({ name, value, options }) => resposta.cookies.set(name, value, options))
         },
       },
-    }
+    },
   )
 
-  const pathname = request.nextUrl.pathname
-
-  // Rotas que NÃO precisam de autenticação — passa direto
-  const isPublicRoute =
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/recuperar-senha') ||
-    pathname.startsWith('/nova-senha') ||
-    pathname.startsWith('/reativar') ||
-    pathname.startsWith('/assinar') ||
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/api/cron') ||
-    pathname.startsWith('/api/webhook') ||
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/api/track') ||
-    pathname.startsWith('/api/admin') ||
-    pathname.startsWith('/api/leads') ||
-    pathname.startsWith('/debug') ||
-    pathname === '/'
-
-  if (isPublicRoute) {
-    return supabaseResponse
-  }
-
-  // Renova a sessão para rotas protegidas
+  // renova a sessão em toda navegação
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redireciona para login se não autenticado
-  if (!user) {
+  const caminho = request.nextUrl.pathname
+  const protegida = PROTEGIDAS.some((p) => caminho === p || caminho.startsWith(p + '/'))
+
+  if (protegida && !user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = '/entrar'
+    url.search = ''
+    if (caminho !== '/painel') url.searchParams.set('voltar', caminho)
     return NextResponse.redirect(url)
   }
-
-  return supabaseResponse
+  if (user && SO_DESLOGADO.includes(caminho)) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/painel'
+    url.search = ''
+    return NextResponse.redirect(url)
+  }
+  return resposta
 }
 
 export const config = {
   matcher: [
-    // arquivos estáticos (imagens, vídeo e áudio da landing) não passam pelo login
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|mp3|wav|vtt)$).*)',
+    // arquivos estáticos (imagens, vídeo e áudio da landing) e a API não passam aqui
+    '/((?!_next/static|_next/image|api/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|mp3|wav|vtt|ico)$).*)',
   ],
 }

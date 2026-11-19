@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "luvy-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 3000 },
+    { "name": "luvy-previa", "runtimeExecutable": "cmd", "runtimeArgs": ["/c", "set LUVY_PREVIA=1&& npx next start -p 3001"], "port": 3001 }
+  ]
+}

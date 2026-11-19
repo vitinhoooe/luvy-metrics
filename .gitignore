@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+/prints
+/.playwright-mcp
+
+# permissões locais do Claude Code (de cada máquina)
+/.claude/settings.local.json

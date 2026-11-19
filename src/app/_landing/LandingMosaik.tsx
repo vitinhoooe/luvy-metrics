@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import VideoReal from './VideoReal'
 import './mosaik.css'
 
-const SIGNUP_URL = '/login'
+const SIGNUP_URL = '/criar-conta'
 // TODO: número real do WhatsApp
 const WHATSAPP = 'https://wa.me/55XXXXXXXXXXX'
 
@@ -81,91 +81,122 @@ function BtnVidro({ href, children }: { href: string; children: React.ReactNode 
 }
 
 /* ---------- conteúdo ---------- */
-type Card = { tipo: 'alta' | 'preco' | 'alerta'; t: string; a: string; b: string }
-const FAIXA_1: Card[] = [
-  { tipo: 'alta', t: 'Óleo de massagem', a: 'Curitiba · PR', b: '+38%' },
-  { tipo: 'preco', t: 'Gel lubrificante 60 ml', a: 'Custo R$ 14,00 · taxa 14% · margem 40%', b: 'R$ 30,43' },
-  { tipo: 'alerta', t: 'Fantasia temática', a: 'Caiu 21% em 30 dias', b: 'Segure a recompra' },
-  { tipo: 'alta', t: 'Kit presente casal', a: 'Londrina · PR', b: '+9%' },
-  { tipo: 'preco', t: 'Vela aromática', a: 'Custo R$ 18,00 · taxa 12% · margem 40%', b: 'R$ 37,50' },
-  { tipo: 'alta', t: 'Lingerie renda', a: 'Joinville · SC', b: '+15%' },
+// as tarefas que o Luvy tira do dia da lojista (o que ela para de fazer, sem prometer horas)
+const TAREFAS: [string, string][] = [
+  ['Conferir Pix pedido por pedido', 'Com o Mercado Pago, o pedido vira “pago” sozinho. Sem ele, o extrato confirma todos de uma vez.'],
+  ['Vender no site o que já acabou no balcão', 'Estoque único: vendeu na loja, some do site na mesma hora.'],
+  ['Perder a cliente que chamou às 23h', 'A atendente virtual responde de madrugada, só com o que tem em estoque.'],
+  ['Contar no olho o que repor', 'A lista de compras sai pronta, separada por fornecedor.'],
+  ['Mandar o status do pedido um por um', 'Um toque avisa a cliente no WhatsApp. Rastreio colado em lote.'],
+  ['Fechar o caixa na calculadora', 'O fechamento mostra na hora se sobrou ou faltou.'],
 ]
-const FAIXA_2: Card[] = [
-  { tipo: 'preco', t: 'Óleo de massagem', a: 'Mercado Livre R$ 62,90', b: 'R$ 55,43' },
-  { tipo: 'alta', t: 'Gel lubrificante 60 ml', a: 'Florianópolis · SC', b: '+12%' },
-  { tipo: 'alerta', t: 'Vela aromática', a: 'Subiu 22% na semana', b: 'Reponha o estoque' },
-  { tipo: 'alta', t: 'Kit presente casal', a: 'Porto Alegre · RS', b: '+11%' },
-  { tipo: 'preco', t: 'Lingerie renda', a: 'Shopee R$ 74,00', b: 'R$ 69,90' },
-  { tipo: 'alerta', t: 'Óleo de massagem', a: 'Restam 3 unidades', b: 'Estoque baixo' },
+// telas reais do app (dados de exemplo)
+const TELAS: [string, string, string][] = [
+  ['hoje', 'Hoje', 'Quanto vendeu, quanto lucrou e o que precisa de você.'],
+  ['vender', 'Balcão', 'Toca no produto, escolhe o Pix, pronto. O estoque baixa na hora.'],
+  ['pedidos', 'Pedidos do site', 'Do Pix à entrega, com prazo de cada etapa e aviso para a cliente.'],
+  ['repor', 'Estoque inteligente', 'O que comprar e o que pôr em promoção, pela sua venda real.'],
 ]
-const ROTULO: Record<Card['tipo'], string> = { alta: 'Em alta', preco: 'Preço ideal', alerta: 'Alerta' }
-
-function CardFaixa({ c }: { c: Card }) {
-  return (
-    <article className={`mk-card mk-card-${c.tipo}`}>
-      <header><span className="mk-card-ico"><I n={c.tipo === 'alta' ? 'tendencia' : c.tipo === 'preco' ? 'calc' : 'sino'} s={16} /></span>{ROTULO[c.tipo]}<em>exemplo</em></header>
-      <h4>{c.t}</h4>
-      <p>{c.a}</p>
-      <strong>{c.b}</strong>
-    </article>
-  )
-}
-
-const LISTA = [
-  ['Óleo de massagem', '+38%'], ['Gel lubrificante 60 ml', '+12%'], ['Kit presente casal', '+9%'], ['Lingerie renda', '+6%'],
-  ['Vela aromática', '+4%'], ['Bolinha funcional', '+2%'], ['Sabonete íntimo', '−3%'], ['Fantasia temática', '−21%'],
-]
-const DESCRICAO = 'Subiu 38% em Curitiba nas últimas 4 semanas. Preço ideal com 40% de margem: R$ 55,43.'
 const PASSOS = [
-  ['01', 'Abra o ranking da semana', 'O que mais cresceu na sua cidade, em ordem.'],
-  ['02', 'Veja o que subiu e o que caiu', 'Alerta no painel quando algo dispara ou para.'],
-  ['03', 'Confira o preço ideal', 'Custo, frete e taxa de cada canal já na conta.'],
-  ['04', 'Faça o pedido', 'Mais do que gira, menos do que encalha.'],
+  ['01', 'Importe sua planilha', 'Seu estoque entra em minutos. A IA entende suas colunas.'],
+  ['02', 'Venda no balcão e no site', 'Um estoque só. Esgotou num lugar, sai de todos.'],
+  ['03', 'Veja o lucro de cada venda', 'Preço menos o custo do produto, no dia em que a venda acontece.'],
+  ['04', 'Reponha o que gira', 'Alerta de estoque baixo antes de faltar.'],
 ]
 
 const ANTES_DEPOIS: [string, string, string][] = [
-  ['Seu tempo', 'Pulando entre planilha, marketplaces, calculadora e caderno', 'Tudo numa tela só, em poucos cliques'],
-  ['O pedido ao fornecedor', 'No palpite, ou no que o vendedor empurrou', 'Pelo ranking do que mais cresce na sua cidade'],
-  ['O preço de venda', 'Copiado do concorrente', 'Calculado com custo, frete, taxa e a sua margem'],
-  ['O produto que começou a parar', 'Você descobre quando já encalhou', 'Alerta assim que ele começa a cair'],
-  ['Mercado Livre e Shopee', 'Dez abas abertas para comparar', 'Seu preço lado a lado com os dois'],
-  ['Onde fica a informação', 'Caderno, planilha e memória', 'Num painel só, atualizado todo dia'],
+  ['Seu tempo', 'Pulando entre planilha, caderno, calculadora e WhatsApp o dia todo', 'Tudo numa tela só: o Luvy faz a conta e te avisa'],
+  ['Receber do site', 'Comprovante no WhatsApp e conferência no banco, um por um', 'Pix ou cartão pelo Mercado Pago, confirmado sozinho e direto na sua conta'],
+  ['Vender o que não tem', 'Vende no site o que já saiu no balcão', 'Estoque único: esgotou, sai de todo lugar'],
+  ['O preço de venda', 'Copiado do concorrente', 'Calculado com custo, frete, taxa do canal e a sua margem'],
+  ['O lucro de verdade', 'Você só descobre no fim do mês, se descobrir', 'Lucro de cada venda, no dia em que ela acontece'],
+  ['O seu site', 'Pagar webdesigner ou depender só de marketplace', 'Site pronto, sem comissão, com atendente IA'],
+  ['O caixa do dia', 'Conta de cabeça e diferença na gaveta', 'Fechamento que mostra se sobrou ou faltou'],
+]
+
+const PLANOS = [
+  {
+    nome: 'Starter', para: 'Para controlar estoque, caixa e preço da loja.', preco: '97', periodo: '/mês', dia: 'R$ 3,23', nota: 'Cobrado por mês, sem fidelidade.',
+    cta: 'Testar o Starter', itens: ['Estoque e catálogo sem limite de produtos', 'Balcão (PDV) e caixa do dia', 'Importação de planilha com IA', 'Calculadora de preço por canal (balcão, maquininha, site e marketplaces)', 'Lucro real de cada venda'],
+    sem: 'Sem site próprio e sem atendente IA', destaque: false, selo: '',
+  },
+  {
+    nome: 'Pro', para: 'Para vender no balcão e na internet sem perder o controle.', preco: '197', depois: '297', periodo: '/mês', dia: 'R$ 6,57',
+    nota: 'Preço de lançamento garantido por 12 meses. Sem fidelidade.',
+    cta: 'Testar o Pro grátis', itens: ['Tudo do Starter', 'Seu site próprio, sem comissão por venda', 'Atendente IA 24h que só oferece o que tem em estoque', 'Pix e cartão pelo Mercado Pago da sua conta, com o pedido confirmado sozinho', 'Estoque inteligente: o que repor e o que pôr em promoção', 'Clientes e fornecedores'],
+    sem: '', destaque: true, selo: 'Preço de lançamento',
+  },
+  {
+    nome: 'Business', para: 'Para quem quer tudo pronto, com a gente do lado.', preco: '1.970', periodo: '/ano', dia: 'R$ 5,40', nota: 'Equivale a R$ 164 por mês. 2 meses grátis.',
+    cta: 'Quero o anual', itens: ['Tudo do Pro, por 1 ano', 'A gente monta seu site e cadastra seus produtos com você', 'Pagamento único no ano'],
+    sem: '', destaque: false, selo: '2 meses grátis',
+  },
+]
+
+// tudo que o Luvy entrega hoje (só o que já funciona)
+const ENTREGAS: { icone: string; t: string; x: string; pronto: boolean }[] = [
+  { icone: 'tendencia', t: 'Estoque único', x: 'Um cadastro para balcão e catálogo. Vendeu, baixou na hora. Seu site entra no mesmo estoque.', pronto: true },
+  { icone: 'calc', t: 'Lucro real de cada venda', x: 'Preço menos o custo do produto. Você vê o lucro do dia, não só o faturamento.', pronto: true },
+  { icone: 'comparar', t: 'Preço certo em cada canal', x: 'A calculadora soma custo, frete, imposto e a taxa do balcão, da maquininha, do site, do Mercado Livre ou da Shopee.', pronto: true },
+  { icone: 'busca', t: 'Sua planilha em 2 minutos', x: 'Arraste o Excel. A IA entende as colunas e você confere antes de importar.', pronto: true },
+  { icone: 'sino', t: 'Alerta antes de faltar', x: 'Estoque baixo e produto esgotado aparecem assim que acontecem.', pronto: true },
+  { icone: 'cadeado', t: 'Caixa que fecha', x: 'Abre com o troco, mostra quanto deve ter na gaveta e se sobrou ou faltou.', pronto: true },
+  { icone: 'pino', t: 'Seu site próprio', x: 'Sua loja online com sua cor e seu catálogo, Pix com QR Code e sem comissão por venda.', pronto: true },
+  { icone: 'chat', t: 'Atendente IA 24h', x: 'Responde suas clientes de madrugada, só oferece o que tem em estoque e coloca na sacola.', pronto: true },
+  { icone: 'sino', t: 'Pix e cartão no seu site', x: 'Conecte o seu Mercado Pago: a cliente paga com Pix ou cartão, o dinheiro cai na sua conta e o pedido vira “pago” sozinho.', pronto: true },
+  { icone: 'sino', t: 'Pedidos até a entrega', x: 'Aviso com som a cada pedido, prazos com alerta de atraso e rastreio colado de uma vez.', pronto: true },
+  { icone: 'tendencia', t: 'O que repor', x: 'Quanto comprar de cada produto antes de acabar, pela sua venda real. Lista pronta para o fornecedor.', pronto: true },
+  { icone: 'calc', t: 'Dinheiro parado vira promoção', x: 'Veja o que está encalhado e coloque em promoção na vitrine com um clique.', pronto: true },
+  { icone: 'busca', t: 'Fornecedores do nicho', x: 'Contatos oficiais de distribuidoras e fabricantes, e os seus fornecedores com prazo e pedido mínimo.', pronto: true },
+
 ]
 
 const FAQ = [
-  ['Funciona na minha cidade?', 'O ranking é montado por região. No teste grátis você vê na hora o que aparece para a sua cidade, antes de pagar qualquer coisa.'],
-  ['Não sou bom com tecnologia. Vou conseguir usar?', 'Se você usa o WhatsApp, usa o LuvyMetrics. É abrir o painel e ler a lista: o que subiu, o que caiu e por quanto vender.'],
-  ['Já uso planilha. Qual a diferença?', 'A planilha mostra o que você já vendeu. O LuvyMetrics mostra o que a sua cidade está comprando agora, e faz a conta do preço por você.'],
+  ['Vendo mais pela internet. Serve pra mim?', 'Se você vende pelo seu site, pelo WhatsApp ou pelo Instagram, serve desde o primeiro dia: o site próprio do Luvy usa o mesmo estoque do balcão, e o link vai na bio e no status. Se a maior parte das suas vendas vem do Mercado Livre ou de outra plataforma, o Luvy não puxa esses pedidos sozinho: dá para importar por planilha.'],
+  ['Como recebo o dinheiro das vendas do site?', 'Direto na sua conta. Conectando o seu Mercado Pago, a cliente paga com Pix ou cartão e o pedido vira “pago” sozinho. Ou pela sua chave Pix, conferida pelo extrato. O LuvyMetrics não segura o seu dinheiro e não cobra taxa por venda. As taxas do Mercado Pago são as do seu contrato com eles.'],
+  ['Vocês fazem o site da minha loja?', 'Sim. No Pro, sua loja online fica pronta usando o mesmo estoque do painel, com a sua cor, Pix com QR Code e sem comissão por venda. No Business, a gente monta com você e cadastra seus produtos.'],
+  ['Como funciona a atendente IA?', 'Ela conversa com suas clientes na vitrine, 24 horas. Só fala dos produtos que você tem em estoque, ajuda a escolher, coloca na sacola e passa para você no WhatsApp quando é troca, reclamação ou pedido já feito. Ela se apresenta como atendente virtual, nunca como pessoa.'],
+  ['Quanto vou vender a mais?', 'Depende da sua loja, e a gente não promete número. O que entregamos é controle: você vai saber todo dia o que vendeu, quanto lucrou, o que está acabando e o que está parado.'],
+  ['Não manjo de tecnologia. Vou conseguir usar?', 'Se você usa o WhatsApp, usa o LuvyMetrics. Arraste sua planilha e o estoque entra sozinho. Vender no balcão é tocar no produto e finalizar.'],
+  ['Quanto tempo leva para começar?', 'Se você já tem planilha de estoque, dá para começar no mesmo dia: arraste o arquivo, confira as colunas e pronto. Dá também para importar as vendas antigas, para o “O que repor” funcionar desde o primeiro dia.'],
+  ['Já uso planilha. Qual a diferença?', 'A planilha não baixa o estoque quando você vende, não calcula a taxa de cada canal e não avisa quando algo está acabando. O LuvyMetrics faz tudo isso, e você importa a sua planilha no primeiro dia.'],
+  ['Por que o Pro está R$ 197?', 'É o preço de lançamento para quem entra agora. Quem assina no lançamento paga R$ 197 por 12 meses, mesmo que o preço suba depois para R$ 297.'],
   ['Preciso de cartão para testar?', 'Não. São 7 dias com tudo liberado. Se não fizer sentido para a sua loja, é só não assinar.'],
-  ['E se eu quiser cancelar?', 'Sem fidelidade. No mensal você cancela quando quiser. No anual, paga uma vez e usa o ano inteiro.'],
+  ['E se eu quiser cancelar?', 'No Starter e no Pro não tem fidelidade: você cancela quando quiser e baixa seus produtos, vendas e clientes em planilha. O Business é anual: paga uma vez e usa o ano inteiro, com 2 meses grátis.'],
 ]
 
 const brlCalc = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-/** A conta que o próprio lojista faz: quanto dinheiro está parado e quanto custa o LuvyMetrics perto disso. */
-function Calculadora() {
-  const [parado, setParado] = useState(4000)
-  const [custo, setCusto] = useState(25)
-  const unidades = Math.floor(parado / custo)
-  const pct = (97 / parado) * 100
+/** A conta do tempo, feita com os números da própria lojista (não é promessa do Luvy). */
+function CalcTempo() {
+  const [planilha, setPlanilha] = useState(40)
+  const [pix, setPix] = useState(30)
+  const [duvidas, setDuvidas] = useState(30)
+  const [hora, setHora] = useState(25)
+  const horasMes = ((planilha + pix + duvidas) * 30) / 60
+  const controle = (rotulo: string, v: number, set: (n: number) => void) => (
+    <label>
+      <span>{rotulo}</span>
+      <b>{v} min por dia</b>
+      <input type="range" min={0} max={180} step={5} value={v} onChange={e => set(Number(e.target.value))} aria-label={rotulo} />
+    </label>
+  )
   return (
     <div className="mk-calc reveal">
       <div className="mk-calc-in">
+        {controle('Atualizando planilha, estoque e caderno', planilha, setPlanilha)}
+        {controle('Conferindo Pix e status de pedido', pix, setPix)}
+        {controle('Respondendo dúvida de produto no direct e no WhatsApp', duvidas, setDuvidas)}
         <label>
-          <span>Quanto você tem em produto parado há mais de 60 dias?</span>
-          <b>R$ {parado.toLocaleString('pt-BR')}</b>
-          <input type="range" min={500} max={30000} step={500} value={parado} onChange={e => setParado(Number(e.target.value))} aria-label="Valor em produto parado" />
-        </label>
-        <label>
-          <span>Quanto custa, em média, cada produto para você?</span>
-          <b>R$ {custo}</b>
-          <input type="range" min={10} max={200} step={5} value={custo} onChange={e => setCusto(Number(e.target.value))} aria-label="Custo médio por produto" />
+          <span>Quanto vale 1 hora do seu trabalho?</span>
+          <b>R$ {hora}</b>
+          <input type="range" min={10} max={200} step={5} value={hora} onChange={e => setHora(Number(e.target.value))} aria-label="Valor da sua hora" />
         </label>
       </div>
       <div className="mk-calc-out">
-        <p className="mk-calc-n"><strong>{unidades.toLocaleString('pt-BR')}</strong> produtos parados</p>
-        <p>São <b>R$ {parado.toLocaleString('pt-BR')}</b> que não viram pedido novo. Esse dinheiro poderia estar no que está saindo agora na sua cidade.</p>
-        <p className="mk-calc-cmp">Um mês de LuvyMetrics custa <b>R$ 97</b>, ou <b>{brlCalc(pct)}%</b> do que está parado na sua prateleira.</p>
+        <p className="mk-calc-n"><strong>{horasMes.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} h</strong> por mês</p>
+        <p>É o tempo que essas tarefas te tomam hoje. No valor da sua hora, são <b>R$ {Math.round(horasMes * hora).toLocaleString('pt-BR')}</b> por mês fazendo controle em vez de vender.</p>
+        <p className="mk-calc-cmp">O Pro custa <b>R$ 6,57 por dia</b>. É esse tempo que o LuvyMetrics foi feito para devolver. Os números acima são os seus: mexa nos controles.</p>
       </div>
     </div>
   )
@@ -180,13 +211,8 @@ const tocarVideo = (e: React.MouseEvent) => {
 export default function LandingMosaik() {
   const raiz = useRef<HTMLDivElement>(null)
   const metal = useRef<HTMLDivElement>(null)
-  const faixas = useRef<HTMLElement>(null)
-  const f1 = useRef<HTMLDivElement>(null)
-  const f2 = useRef<HTMLDivElement>(null)
-  const mock = useRef<HTMLDivElement>(null)
   const why = useRef<HTMLElement>(null)
   const ghost = useRef<HTMLDivElement>(null)
-  const tipo = useRef<HTMLParagraphElement>(null)
 
   useEffect(() => {
     const html = document.documentElement
@@ -198,43 +224,23 @@ export default function LandingMosaik() {
       if (!e.isIntersecting) return
       e.target.classList.add('in')
       io.unobserve(e.target)
-      if (e.target === mock.current) digitar()
       if (e.target.hasAttribute('data-count')) contar(e.target as HTMLElement)
     }), { threshold: 0, rootMargin: '0px 0px -10% 0px' })
     raiz.current!.querySelectorAll('.reveal, [data-count]').forEach(el => io.observe(el))
-    if (mock.current) io.observe(mock.current)
     // rede de segurança para scroll muito rápido
     let rede = 0
     const onScrollRede = () => {
       clearTimeout(rede)
       rede = window.setTimeout(() => {
-        raiz.current?.querySelectorAll('.reveal:not(.in), .mk-mock:not(.in)').forEach(el => {
+        raiz.current?.querySelectorAll('.reveal:not(.in)').forEach(el => {
           if (el.getBoundingClientRect().top < window.innerHeight) {
             el.classList.add('in'); io.unobserve(el)
-            if (el === mock.current) digitar()
             if (el.hasAttribute('data-count')) contar(el as HTMLElement)
           }
         })
       }, 180)
     }
     window.addEventListener('scroll', onScrollRede, { passive: true })
-
-    // texto digitado no mockup (o resto do texto segura o espaço)
-    let timer = 0
-    function digitar() {
-      const el = tipo.current
-      if (!el) return
-      if (reduz) { el.dataset.done = '1'; (el.children[0] as HTMLElement).textContent = DESCRICAO; (el.children[1] as HTMLElement).textContent = ''; return }
-      let i = 0
-      const passo = () => {
-        i++
-        ;(el.children[0] as HTMLElement).textContent = DESCRICAO.slice(0, i)
-        ;(el.children[1] as HTMLElement).textContent = DESCRICAO.slice(i)
-        if (i < DESCRICAO.length) timer = window.setTimeout(passo, 30)
-        else el.dataset.done = '1'
-      }
-      timer = window.setTimeout(passo, 550)
-    }
 
     // números que contam
     function contar(el: HTMLElement) {
@@ -251,11 +257,8 @@ export default function LandingMosaik() {
     }
 
     // medidas só na montagem e no resize
-    let larg1 = 0, larg2 = 0, topoFaixas = 0, topoWhy = 0, altWhy = 0
+    let topoWhy = 0, altWhy = 0
     const medir = () => {
-      larg1 = (f1.current?.scrollWidth ?? 0) / 3
-      larg2 = (f2.current?.scrollWidth ?? 0) / 3
-      topoFaixas = faixas.current ? faixas.current.getBoundingClientRect().top + window.scrollY : 0
       if (why.current) { topoWhy = why.current.getBoundingClientRect().top + window.scrollY; altWhy = why.current.offsetHeight }
     }
     medir()
@@ -270,11 +273,6 @@ export default function LandingMosaik() {
       const p = grande ? Math.min(1, Math.max(0, y / vh)) : 0
       const e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
       metal.current?.style.setProperty('--spin', `${(e * 0.7 * 360).toFixed(2)}deg`)
-      if (grande && f1.current && larg1) {
-        const d = (y - topoFaixas + vh) * 0.3
-        f1.current.style.transform = `translate3d(${(-larg1 + (((d % larg1) + larg1) % larg1)).toFixed(1)}px,0,0)`
-        f2.current!.style.transform = `translate3d(${(-(((d % larg2) + larg2) % larg2)).toFixed(1)}px,0,0)`
-      }
       if (grande && ghost.current && altWhy) {
         const q = Math.max(-.5, Math.min(.5, (y + vh / 2 - (topoWhy + altWhy / 2)) / (altWhy + vh)))
         ghost.current.style.transform = `translateY(calc(-42% + ${(q * 300).toFixed(1)}px)) rotate(${(q * 8).toFixed(2)}deg) scale(${(1 + q * .14).toFixed(3)})`
@@ -300,14 +298,13 @@ export default function LandingMosaik() {
         el.addEventListener('pointermove', move); el.addEventListener('pointerleave', sai)
         tiraTilt.push(() => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerleave', sai) })
       }
-      liga(mock.current, true)
       raiz.current!.querySelectorAll<HTMLElement>('.mk-stat').forEach(el => liga(el, false))
     }
 
     requestAnimationFrame(() => html.classList.add('mk-ready'))
     return () => {
       html.classList.remove('mk-page', 'mk-ready')
-      io.disconnect(); clearTimeout(timer); cancelAnimationFrame(raf)
+      io.disconnect(); cancelAnimationFrame(raf)
       window.removeEventListener('scroll', onScroll); window.removeEventListener('scroll', onScrollRede); clearTimeout(rede); window.removeEventListener('resize', medir)
       tiraTilt.forEach(f => f())
     }
@@ -323,23 +320,23 @@ export default function LandingMosaik() {
         <nav className="mk-nav" aria-label="Principal">
           <a href="#" aria-label="LuvyMetrics, início"><Logo /></a>
           <div className="mk-nav-pill glass">
-            <a href="#video">Vídeo</a><a href="#custo">Faça a conta</a><a href="#precos">Preços</a>
+            <a href="#video">Vídeo</a><a href="#tempo">Seu tempo</a><a href="#precos">Preços</a>
           </div>
           <BtnClaro href={SIGNUP_URL}>Testar grátis</BtnClaro>
         </nav>
 
         <div className="mk-hero-copy">
-          <p className="mk-hero-tag reveal" style={d(0)}>Para donos de sex shop</p>
+          <p className="mk-hero-tag reveal" style={d(0)}>Para lojas de bem-estar íntimo que vendem no balcão e na internet</p>
           <h1 className="reveal" style={d(60)}>
-            <span>Chega de estoque parado.</span>
-            <strong>Compre o que vende na sua cidade.</strong>
+            <span>Menos tempo na planilha.</span>
+            <strong>Mais tempo vendendo.</strong>
           </h1>
           <p className="mk-hero-sub reveal" style={d(150)}>
-            Ranking da sua cidade, preço ideal e comparação com Mercado Livre e Shopee numa tela só. Você para de perder tempo pulando entre planilhas e para de apostar no pedido.
+            Seu site próprio vende 24 horas com a atendente virtual. O Pix e o cartão caem direto na sua conta pelo Mercado Pago, e o pedido vira “pago” sozinho. Vendeu no balcão, some do site na hora. Sem comissão por venda.
           </p>
           <div className="mk-hero-btns reveal" style={d(250)}>
             <BtnClaro href={SIGNUP_URL}>Testar 7 dias grátis</BtnClaro>
-            <a href="#video" className="mk-btn-glass glass mk-btn-video" onClick={tocarVideo}><i aria-hidden>▶</i> Ver em 1 minuto</a>
+            <a href="#video" className="mk-btn-glass glass mk-btn-video" onClick={tocarVideo}><i aria-hidden>▶</i> Ver por dentro</a>
           </div>
         </div>
 
@@ -351,78 +348,57 @@ export default function LandingMosaik() {
         </p>
       </section>
 
-      {/* FAIXAS (só desktop) */}
-      <section className="mk-strips" ref={faixas} aria-hidden>
-        <div className="mk-strip" ref={f1}>{[0, 1, 2].flatMap(k => FAIXA_1.map((c, i) => <CardFaixa key={`${k}-${i}`} c={c} />))}</div>
-        <div className="mk-strip" ref={f2}>{[0, 1, 2].flatMap(k => FAIXA_2.map((c, i) => <CardFaixa key={`${k}-${i}`} c={c} />))}</div>
-      </section>
-
       {/* VÍDEO */}
       <section className="mk-video mk-sec">
-        <span className="mk-label reveal">Em 1 minuto</span>
-        <h2 className="reveal" style={d(100)}><span>Chega de pular de planilha em planilha.</span> <strong>Tudo numa tela só.</strong></h2>
+        <span className="mk-label reveal">Por dentro</span>
+        <h2 className="reveal" style={d(100)}><span>Telas reais do app.</span> <strong>Em 44 segundos.</strong></h2>
         <div className="mk-video-box reveal" style={d(200)}><VideoReal /></div>
       </section>
 
-      {/* A CONTA */}
-      <section className="mk-custo mk-sec" id="custo">
-        <span className="mk-label reveal">Faça a conta</span>
-        <h2 className="reveal" style={d(100)}><span>Quanto o estoque parado</span> <strong>está te custando?</strong></h2>
-        <Calculadora />
+      {/* SEU TEMPO */}
+      <section className="mk-custo mk-sec" id="tempo">
+        <span className="mk-label reveal">O seu tempo</span>
+        <h2 className="reveal" style={d(100)}><span>As tarefas que</span> <strong>somem do seu dia.</strong></h2>
+        <div className="mk-tarefas">
+          {TAREFAS.map(([antes, depois], i) => (
+            <article key={antes} className="mk-tarefa glass reveal" style={d(60 + (i % 3) * 80)}>
+              <s>{antes}</s>
+              <p><I n="tendencia" s={16} />{depois}</p>
+            </article>
+          ))}
+        </div>
+        <h3 className="mk-tempo-pergunta reveal">Quanto tempo isso te toma hoje? Faça a conta.</h3>
+        <CalcTempo />
       </section>
 
-      {/* O QUE VOCÊ RECEBE (painel) */}
-      <section className="mk-ws mk-sec" id="painel">
-        <div className="mk-ws-txt">
-          <span className="mk-label reveal">O que você recebe</span>
-          <h2 className="reveal" style={d(100)}><span>Três decisões que</span> <strong>mudam o mês da loja.</strong></h2>
-          <p className="reveal" style={d(200)}><b>O que comprar.</b> O ranking mostra o que mais cresce na sua cidade e o que começou a cair, antes de você fechar o pedido.</p>
-          <p className="reveal mk-hide-m" style={d(260)}><b>Por quanto vender.</b> A calculadora soma custo, embalagem, frete e a taxa de cada canal e entrega o preço que mantém a sua margem.</p>
-          <p className="reveal mk-hide-m" style={d(320)}><b>Onde você está caro.</b> O comparador põe o seu preço ao lado do Mercado Livre e da Shopee.</p>
+      {/* TUDO QUE VEM NO LUVY */}
+      <section className="mk-tudo mk-sec" id="tudo">
+        <span className="mk-label reveal">O que vem no LuvyMetrics</span>
+        <h2 className="reveal" style={d(100)}><span>Sua loja inteira,</span> <strong>num controle só.</strong></h2>
+        <div className="mk-tudo-grade">
+          {ENTREGAS.map((e, i) => (
+            <article key={e.t} className="mk-tudo-item glass reveal" style={d(80 + (i % 3) * 80)}>
+              <span className="mk-tudo-ico"><I n={e.icone} s={18} /></span>
+              <h3>{e.t}{!e.pronto && <em>em breve</em>}</h3>
+              <p>{e.x}</p>
+            </article>
+          ))}
         </div>
+      </section>
 
-        <div className="mk-mock-stage">
-          <div className="mk-mock" ref={mock}>
-            <div className="mk-mock-light" />
-            <div className="mk-mock-bar">
-              <Logo />
-              <span className="mk-mock-search"><I n="busca" s={15} /><span>Buscar produto</span></span>
-              <span className="mk-mock-tag">Dados de exemplo</span>
-            </div>
-            <div className="mk-mock-body">
-              <aside>
-                <h6>Cidades</h6>
-                {[['Curitiba', 128], ['Londrina', 74], ['Joinville', 61]].map(([c, n], i) => (
-                  <div key={c} className={i === 0 ? 'on' : ''}><I n="pino" s={14} />{c}<em>{n}</em></div>
-                ))}
-                <h6>Atalhos</h6>
-                <div><I n="tendencia" s={14} />Em alta</div><div><I n="calc" s={14} />Calculadora</div><div><I n="comparar" s={14} />Comparador</div>
-              </aside>
-              <ol className="mk-mock-list">
-                {LISTA.map(([n, v], i) => (
-                  <li key={n} className={i === 0 ? 'on' : ''} style={{ transitionDelay: `${i * 45 + 250}ms` }}>
-                    <span className="mono">{String(i + 1).padStart(2, '0')}</span>{n}<b className={v.startsWith('−') ? 'down' : ''}>{v}</b>
-                  </li>
-                ))}
-              </ol>
-              <div className="mk-mock-detail">
-                <h5>Óleo de massagem</h5>
-                <p className="mk-type" ref={tipo}><span /><span className="ghost">{DESCRICAO}</span><i /></p>
-                <dl>
-                  <div><dt>Preço ideal</dt><dd>R$ 55,43</dd></div>
-                  <div><dt>Mercado Livre</dt><dd>R$ 62,90</dd></div>
-                  <div><dt>Shopee</dt><dd>R$ 58,40</dd></div>
-                </dl>
-                <h6>Últimas semanas</h6>
-                <ul className="mk-mock-vers">
-                  {[['Semana 4', '+38%'], ['Semana 3', '+21%'], ['Semana 2', '+9%'], ['Semana 1', '+2%']].map(([s, v], i) => (
-                    <li key={s} style={{ transitionDelay: `${i * 130 + 700}ms` }}><span>{s}</span><b>{v}</b></li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
+      {/* TELAS REAIS */}
+      <section className="mk-telas mk-sec" id="painel">
+        <span className="mk-label reveal">Telas reais</span>
+        <h2 className="reveal" style={d(100)}><span>O que você vê</span> <strong>quando abre o Luvy.</strong></h2>
+        <div className="mk-telas-grade">
+          {TELAS.map(([img, t, x], i) => (
+            <figure key={img} className="mk-tela reveal" style={d(80 + (i % 2) * 120)}>
+              <div className="mk-tela-img"><img src={`/landing/${img}.webp`} alt={`Tela ${t} do LuvyMetrics, com dados de exemplo`} loading="lazy" width={1440} height={900} /></div>
+              <figcaption><b>{t}</b>{x}</figcaption>
+            </figure>
+          ))}
         </div>
+        <p className="mk-telas-nota reveal">Telas do app com dados de exemplo.</p>
       </section>
 
       {/* SEM × COM */}
@@ -444,7 +420,7 @@ export default function LandingMosaik() {
       {/* O HÁBITO (anti-cancelamento: o valor aparece toda semana) */}
       <section className="mk-how mk-sec" id="como">
         <span className="mk-label reveal">Como funciona</span>
-        <h2 className="reveal" style={d(100)}><span>Uma olhada por semana,</span><strong className="grad">antes de cada pedido.</strong></h2>
+        <h2 className="reveal" style={d(100)}><span>Do primeiro dia</span><strong className="grad">ao fechamento do mês.</strong></h2>
         <ol className="mk-chev">
           {PASSOS.map(([n, t, x], i) => (
             <li key={n} style={{ transitionDelay: `${i * 150 + 120}ms` }}>
@@ -452,22 +428,46 @@ export default function LandingMosaik() {
             </li>
           ))}
         </ol>
-        <p className="mk-how-foot reveal"><Marca size={22} /> Todo dia o ranking é atualizado. Toda semana tem um motivo novo para abrir.</p>
+        <p className="mk-how-foot reveal"><Marca size={22} /> Cada venda atualiza o estoque e o lucro na hora. Todo dia tem um motivo para abrir.</p>
       </section>
 
       {/* OFERTA */}
       <section className="mk-stats mk-sec" id="precos">
         <span className="mk-label reveal">A oferta</span>
-        <h2 className="reveal" style={d(100)}><span>Teste tudo antes.</span> <strong>Pague só se servir.</strong></h2>
-        <div className="mk-stats-grid">
-          <div className="mk-stat reveal" data-count="7"><div className="mk-num"><b>0</b><small>dias</small></div><p>de teste com tudo liberado. Sem cartão de crédito.</p></div>
-          <div className="mk-stat reveal" style={d(100)} data-count="97"><div className="mk-num"><small>R$</small><b>0</b><small>/mês</small></div><p>no plano Lojista. É <b>R$ 3,23 por dia</b> para comprar e precificar com dados.</p></div>
-          <div className="mk-stat mk-stat-txt reveal" style={d(200)}><h3>Anual: 2 meses grátis.</h3><p>R$ 970 por ano, o mesmo que R$ 80,83 por mês. Para quem já decidiu que compra com dados.</p></div>
-          <div className="mk-stat mk-stat-txt reveal" style={d(300)}><h3>Sem fidelidade.</h3><p>No mensal, cancele quando quiser. Seus dados ficam só na sua conta.</p></div>
+        <h2 className="reveal" style={d(100)}><span>Escolha o plano.</span> <strong>Teste 7 dias antes de pagar.</strong></h2>
+        <div className="mk-dia reveal" style={d(150)}>
+          <strong className="grad">R$ 6,57 por dia.</strong>
+          <p>É o que custa o Pro para largar a planilha, o caderno e a conferência de Pix um por um. <b>Balcão, site próprio, Pix e cartão pelo Mercado Pago, estoque inteligente, clientes, fornecedores e atendente IA</b> num lugar só.</p>
+          <p className="mk-dia-conta">Faça a conta: se ele salvar <b>2 vendas no mês</b> que você perderia por demora para responder ou por estoque errado, o Pro já se pagou. O resultado depende da sua loja.</p>
+        </div>
+        <div className="mk-planos">
+          {PLANOS.map((p, i) => (
+            <article key={p.nome} className={`mk-plano reveal ${p.destaque ? 'destaque' : ''}`} style={d(i * 100)}>
+              <div className="mk-plano-topo">
+                <h3>{p.nome}</h3>
+                {p.selo && <span className="mk-plano-selo">{p.selo}</span>}
+              </div>
+              <p className="mk-plano-para">{p.para}</p>
+              {'depois' in p && p.depois && <p className="mk-plano-de">Preço de lançamento · depois R$ {p.depois}</p>}
+              <div className="mk-plano-preco"><small>R$</small><b>{p.preco}</b><small>{p.periodo}</small></div>
+              <p className="mk-plano-dia">Dá <b>{p.dia} por dia</b></p>
+              <p className="mk-plano-nota">{p.nota}</p>
+              <a className={p.destaque ? 'mk-btn-light mk-plano-cta' : 'mk-btn-glass glass mk-plano-cta'} href={SIGNUP_URL}>
+                <span>{p.cta}</span>{p.destaque && <i><I n="seta" s={16} /></i>}
+              </a>
+              <ul>
+                {p.itens.map(it => <li key={it}><I n="tendencia" s={15} />{it.replace(/^~/, '')}{it.startsWith('~') && <em className="mk-breve">em breve</em>}</li>)}
+                {p.sem && <li className="sem">{p.sem}</li>}
+              </ul>
+            </article>
+          ))}
         </div>
         <div className="mk-oferta-cta reveal" style={d(350)}>
           <BtnClaro href={SIGNUP_URL}>Começar meus 7 dias grátis</BtnClaro>
-          <span>Sem cartão. Cancele quando quiser.</span>
+          <span>7 dias grátis em qualquer plano. Sem cartão. Sem fidelidade no mensal.</span>
+          <p className="mk-lancamento">
+            <b>Preço de lançamento do Pro: R$ 197 por mês, garantido por 12 meses.</b> Depois do lançamento, o Pro passa a custar R$ 297 para quem assinar. Quem entrar agora continua pagando R$ 197 até completar 12 meses.
+          </p>
         </div>
       </section>
 
@@ -485,10 +485,10 @@ export default function LandingMosaik() {
       {/* MANIFESTO */}
       <section className="mk-why mk-sec" ref={why}>
         <div className="mk-why-txt">
-          <h2 className="mk-shine reveal"><span data-t="Estoque é">Estoque é</span><span data-t="decisão, não aposta." className="g">decisão, não aposta.</span></h2>
-          <p className="reveal" style={d(150)}>Quem compra com dados repõe o que gira, segura o que para e não deixa a taxa do canal levar a margem embora.</p>
+          <h2 className="mk-shine reveal"><span data-t="Venda em todo lugar.">Venda em todo lugar.</span><span data-t="Controle num só." className="g">Controle num só.</span></h2>
+          <p className="reveal" style={d(150)}>Quem vende no balcão, no site e no WhatsApp não tem tempo a perder com planilha. Precisa de um estoque só, do Pix conferido e do lucro de verdade no fim do dia.</p>
           <div className="mk-princ reveal" style={d(250)}>
-            <div><I n="pino" /><h4>Da sua cidade</h4><p>Não a média do Brasil.</p></div>
+            <div><I n="pino" /><h4>Todos os canais</h4><p>Balcão, site, WhatsApp e Instagram.</p></div>
             <div><I n="calc" /><h4>Com todas as taxas</h4><p>Preço que fecha a conta.</p></div>
             <div><I n="cadeado" /><h4>Privado</h4><p>Ninguém vê os números da sua loja.</p></div>
           </div>
@@ -500,14 +500,14 @@ export default function LandingMosaik() {
       <section className="mk-cta-wrap mk-sec">
         <div className="mk-cta">
           <div className="reveal"><Logo claro={false} /></div>
-          <h2 className="reveal" style={d(100)}>Faça o próximo pedido sabendo o que vende.</h2>
+          <h2 className="reveal" style={d(100)}>Seu tempo de volta para vender.</h2>
           <p className="reveal" style={d(200)}>7 dias com tudo liberado, sem cartão. Se não fizer sentido para a sua loja, é só não assinar.</p>
           <div className="mk-cta-btns reveal" style={d(300)}>
             <a href={SIGNUP_URL} className="mk-btn-dark">Testar 7 dias grátis <I n="seta" s={16} /></a>
             <a href="#video" className="mk-btn-white" onClick={tocarVideo}>Ver o vídeo de novo</a>
           </div>
           <hr className="reveal" style={d(380)} />
-          <small className="reveal" style={d(440)}>Feito para lojistas de sex shop do Brasil.</small>
+          <small className="reveal" style={d(440)}>Feito para lojistas de bem-estar íntimo do Brasil.</small>
         </div>
       </section>
 
@@ -516,7 +516,7 @@ export default function LandingMosaik() {
         <div className="mk-foot-top">
           <div className="mk-foot-brand">
             <Logo />
-            <p>Inteligência de mercado para sex shops.</p>
+            <p>Loja online e controle de estoque para bem-estar íntimo.</p>
             {/* TODO: links reais do Instagram e WhatsApp */}
             <div className="mk-social">
               <a href="#" className="glass" aria-label="Instagram"><I n="insta" s={18} /></a>
@@ -524,8 +524,8 @@ export default function LandingMosaik() {
             </div>
           </div>
           <div className="mk-foot-cols">
-            <div><h6>Produto</h6><a href="#video">Vídeo</a><a href="#custo">Faça a conta</a><a href="#precos">Preços</a></div>
-            <div><h6>Conta</h6><a href="/login">Entrar</a><a href={SIGNUP_URL}>Testar grátis</a></div>
+            <div><h6>Produto</h6><a href="#video">Vídeo</a><a href="#tudo">O que vem</a><a href="#tempo">Seu tempo</a><a href="#precos">Preços</a></div>
+            <div><h6>Conta</h6><a href="/entrar">Entrar</a><a href={SIGNUP_URL}>Testar grátis</a></div>
             <div><h6>Ajuda</h6><a href="#duvidas">Dúvidas</a><a href={WHATSAPP}>WhatsApp</a></div>
             {/* TODO: páginas de Termos e Privacidade (LGPD) */}
             <div><h6>Legal</h6><a href="#">Termos de uso</a><a href="#">Privacidade</a></div>

@@ -1,58 +1,17 @@
+import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://luvymetrics.com.br'
+// link de confirmação de e-mail e de recuperar senha caem aqui
+export async function GET(request: NextRequest) {
+  const url = request.nextUrl
+  const code = url.searchParams.get('code')
+  const nextParam = url.searchParams.get('next') ?? '/painel'
+  const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/painel'
 
-export async function GET(request: Request) {
-  const url = new URL(request.url)
-  const { searchParams } = url
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
-
-  console.log('[AUTH CALLBACK] incoming request', {
-    url: request.url,
-    origin: url.origin,
-    host: request.headers.get('host'),
-    hasCode: !!code,
-    codeLength: code?.length,
-    next,
-    siteUrl: SITE_URL,
-  })
-
-  if (!code) {
-    console.error('[AUTH CALLBACK] missing code param')
-    return NextResponse.redirect(`${SITE_URL}/login?error=no_code`)
-  }
-
-  try {
+  if (code) {
     const supabase = await createClient()
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (error) {
-      console.error('[AUTH CALLBACK] exchangeCodeForSession error', {
-        message: error.message,
-        status: error.status,
-        name: error.name,
-      })
-      return NextResponse.redirect(
-        `${SITE_URL}/login?error=exchange&msg=${encodeURIComponent(error.message)}`
-      )
-    }
-
-    console.log('[AUTH CALLBACK] success', {
-      hasSession: !!data.session,
-      hasUser: !!data.user,
-      userId: data.user?.id,
-    })
-
-    return NextResponse.redirect(`${SITE_URL}${next}`)
-  } catch (err: any) {
-    console.error('[AUTH CALLBACK] unexpected error', {
-      message: err?.message,
-      stack: err?.stack,
-    })
-    return NextResponse.redirect(
-      `${SITE_URL}/login?error=unexpected&msg=${encodeURIComponent(err?.message ?? 'unknown')}`
-    )
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) return NextResponse.redirect(new URL(next, url.origin))
   }
+  return NextResponse.redirect(new URL('/entrar?erro=link', url.origin))
 }
